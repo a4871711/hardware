@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.base.bom.dao.BaseBomOtherAmountDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_base_bom_other_amount.bom_other_amount_id,
+        t_base_bom_other_amount.bom_id,
+        t_base_bom_other_amount.other_amount_name,
+        t_base_bom_other_amount.amount,
+        t_base_bom_other_amount.waste,
+        t_base_bom_other_amount.company_id,
+        t_base_bom_other_amount.version,
+        t_base_bom_other_amount.create_user_id,
+        t_base_bom_other_amount.create_user_name,
+        t_base_bom_other_amount.create_time,
+        t_base_bom_other_amount.update_user_id,
+        t_base_bom_other_amount.update_user_name,
+        t_base_bom_other_amount.update_time,
+        t_base_bom_other_amount.deleted_flag
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.base.bom.domain.vo.BaseBomOtherAmountVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_base_bom_other_amount
+    </select>
+    <select id="findByBomId"
+            resultType="net.lab1024.sa.admin.module.business.base.bom.domain.vo.BaseBomOtherAmountVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_base_bom_other_amount t_base_bom_other_amount
+        <where>
+            t_base_bom_other_amount.deleted_flag = 0
+            AND t_base_bom_other_amount.bom_id = #{bomId}
+        </where>
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_base_bom_other_amount set deleted_flag = #{deletedFlag}
+        where bom_other_amount in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_base_bom_other_amount
+        set deleted_flag = #{deletedFlag}
+        where bom_other_amount = #{bomOtherAmount}
+    </update>
+
+</mapper>

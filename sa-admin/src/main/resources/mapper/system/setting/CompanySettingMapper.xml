@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.system.setting.dao.CompanySettingDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_company_setting.company_setting_id,
+        t_company_setting.setting_id,
+        t_company_setting.param_description,
+        t_company_setting.param_value,
+        t_company_setting.company_id,
+        t_company_setting.version,
+        t_company_setting.create_user_id,
+        t_company_setting.create_user_name,
+        t_company_setting.create_time,
+        t_company_setting.update_user_id,
+        t_company_setting.update_user_name,
+        t_company_setting.update_time,
+        t_company_setting.deleted_flag
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.system.setting.domain.vo.CompanySettingVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_company_setting
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_company_setting set deleted_flag = #{deletedFlag}
+        where company_setting_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_company_setting
+        set deleted_flag = #{deletedFlag}
+        where company_setting_id = #{companySettingId}
+    </update>
+
+</mapper>

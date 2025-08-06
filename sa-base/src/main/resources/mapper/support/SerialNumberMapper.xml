@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.base.module.support.serialnumber.dao.SerialNumberDao">
+
+    <update id="updateLastNumberAndTime">
+        update t_serial_number
+        set
+        last_number = #{lastNumber},
+        last_time = #{lastTime}
+        where
+        serial_number_id = #{serialNumberId}
+
+    </update>
+
+    <!-- 查询最后生成记录 -->
+    <select id="selectForUpdate" resultType="net.lab1024.sa.base.module.support.serialnumber.domain.SerialNumberEntity">
+       select * from t_serial_number where serial_number_id = #{serialNumberId} for update
+    </select>
+    <select id="getAll" resultType="net.lab1024.sa.base.module.support.serialnumber.domain.SerialNumberEntity">
+        select t_serial_number.serial_number_id,
+               t_serial_number.menu_name,
+               t_serial_number.business_name,
+               COALESCE(t_company_serial_number.format, t_serial_number.format)                       AS format,
+               COALESCE(t_company_serial_number.rule_type, t_serial_number.rule_type)                 AS ruleType,
+               COALESCE(t_company_serial_number.init_number, t_serial_number.init_number)             AS initNumber,
+               COALESCE(t_company_serial_number.step_random_range,
+                        t_serial_number.step_random_range)                                            AS stepRandomRange,
+               COALESCE(t_company_serial_number.remark, t_serial_number.remark)                       AS remark,
+               COALESCE(t_company_serial_number.last_number, t_serial_number.last_number)             AS lastNumber,
+               COALESCE(t_company_serial_number.last_time, t_serial_number.last_time)                 AS lastTime,
+               COALESCE(t_company_serial_number.update_time, t_serial_number.update_time)             AS updateTime,
+               COALESCE(t_company_serial_number.create_time, t_serial_number.create_time)             AS createTime
+        from t_serial_number t_serial_number
+                 LEFT JOIN t_company_serial_number t_company_serial_number
+                           ON t_serial_number.serial_number_id = t_company_serial_number.serial_number_id AND
+                              t_company_serial_number.company_id = #{companyId}
+    </select>
+
+
+</mapper>

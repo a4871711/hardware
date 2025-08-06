@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.oa.bank.BankDao">
+    <update id="deleteBank">
+        UPDATE t_oa_bank
+        SET deleted_flag = #{deletedFlag}
+        WHERE bank_id = #{bankId}
+    </update>
+    <select id="queryByAccountNumber"
+            resultType="net.lab1024.sa.admin.module.business.oa.bank.domain.BankEntity">
+        SELECT *
+        FROM t_oa_bank
+        WHERE enterprise_id = #{enterpriseId}
+        AND account_number = #{accountNumber}
+        AND deleted_flag = #{deletedFlag}
+        <if test="excludeBankId != null">
+            AND bank_id != #{excludeBankId}
+        </if>
+    </select>
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.oa.bank.domain.BankVO">
+        SELECT
+        b.*,
+        e.enterprise_name AS enterpriseName
+        FROM t_oa_bank b
+        LEFT JOIN t_oa_enterprise e
+        ON b.enterprise_id = e.enterprise_id
+        <where>
+            b.deleted_flag = #{queryForm.deletedFlag}
+            <if test="queryForm.keywords != null and queryForm.keywords != ''">
+                AND (INSTR(b.bank_name, #{queryForm.keywords})
+                OR INSTR(b.account_name, #{queryForm.keywords})
+                OR INSTR(b.account_number, #{queryForm.keywords})
+                OR INSTR(b.create_user_name, #{queryForm.keywords}))
+            </if>
+            <if test="queryForm.startTime != null">
+                AND DATE_FORMAT(b.create_time, '%Y-%m-%d') >= #{queryForm.startTime}
+            </if>
+            <if test="queryForm.endTime != null">
+                AND DATE_FORMAT(b.create_time, '%Y-%m-%d') &lt;= #{queryForm.endTime}
+            </if>
+            <if test="queryForm.disabledFlag != null">
+                AND b.disabled_flag = #{queryForm.disabledFlag}
+            </if>
+            <if test="queryForm.enterpriseId != null">
+                AND b.enterprise_id = #{queryForm.enterpriseId}
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY b.create_time DESC
+        </if>
+    </select>
+    <select id="getDetail" resultType="net.lab1024.sa.admin.module.business.oa.bank.domain.BankVO">
+        SELECT
+            b.*,
+            e.enterprise_name AS enterpriseName
+        FROM t_oa_bank b
+                 LEFT JOIN t_oa_enterprise e
+                           ON b.enterprise_id = e.enterprise_id
+        WHERE b.bank_id = #{bankId}
+          AND b.deleted_flag = #{deletedFlag}
+    </select>
+</mapper>

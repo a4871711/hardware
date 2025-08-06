@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.base.bom.dao.BaseBomProductDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_base_bom_product.bom_product_id,
+        t_base_bom_product.bom_id,
+        t_base_bom_product.mat_id,
+        t_base_bom_product.parent_mat_id,
+        t_base_bom_product.usage_amount,
+        t_base_bom_product.waste,
+        t_base_bom_product.cust_id,
+        t_base_bom_product.unit_price,
+        t_base_bom_product.company_id,
+        t_base_bom_product.version,
+        t_base_bom_product.create_user_id,
+        t_base_bom_product.create_user_name,
+        t_base_bom_product.create_time,
+        t_base_bom_product.update_user_id,
+        t_base_bom_product.update_user_name,
+        t_base_bom_product.update_time,
+        t_base_bom_product.deleted_flag
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.base.bom.domain.vo.BaseBomProductVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_base_bom_product
+        <where>
+            t_base_bom_product.deleted_flag = 0
+            <if test="queryForm.keywords != null and queryForm.keywords != ''">
+                AND (INSTR(t_base_bom_product.product_code, #{queryForm.keywords})
+                OR INSTR(t_base_bom_product.product_name,#{queryForm.keywords})
+                )
+            </if>
+        </where>
+    </select>
+
+
+    <select id="findByBomId"
+            resultType="net.lab1024.sa.admin.module.business.base.bom.domain.vo.BaseBomProductVO">
+        SELECT
+        <include refid="base_columns"/>,
+        t_base_mat.mat_name,
+        t_base_mat.mat_no,
+        t_base_mat.pro ,
+        t_base_mat.source_property,
+        t_base_cust.cust_name,
+        t_base_color.color_name matColor,
+        t_base_bom.product_code
+        FROM t_base_bom_product t_base_bom_product
+        INNER JOIN t_base_bom t_base_bom ON t_base_bom_product.bom_id = t_base_bom.bom_id
+        LEFT JOIN t_base_mat t_base_mat ON t_base_bom_product.mat_id = t_base_mat.mat_id
+        LEFT JOIN t_base_cust t_base_cust ON t_base_bom_product.cust_id = t_base_cust.cust_id
+        LEFT JOIN t_base_color t_base_color ON t_base_mat.color_id = t_base_color.color_id
+        <where>
+            t_base_bom_product.deleted_flag = 0
+            AND t_base_bom_product.bom_id = #{bomId}
+        </where>
+    </select>
+    <select id="findByBomIdList"
+            resultType="net.lab1024.sa.admin.module.business.base.bom.domain.vo.BaseBomProductVO">
+        SELECT
+        <include refid="base_columns"/>,
+        t_base_mat.mat_name,
+        t_base_mat.mat_no,
+        t_base_mat.pro ,
+        t_base_mat.source_property,
+        t_base_cust.cust_name,
+        t_base_color.color_name matColor,
+        t_base_bom.product_code
+        FROM t_base_bom_product t_base_bom_product
+        INNER JOIN t_base_bom t_base_bom ON t_base_bom_product.bom_id = t_base_bom.bom_id
+        LEFT JOIN t_base_mat t_base_mat ON t_base_bom_product.mat_id = t_base_mat.mat_id
+        LEFT JOIN t_base_cust t_base_cust ON t_base_bom_product.cust_id = t_base_cust.cust_id
+        LEFT JOIN t_base_color t_base_color ON t_base_mat.color_id = t_base_color.color_id
+        <where>
+            t_base_bom_product.deleted_flag = 0
+            <if test="bomIdList != null and bomIdList.size() > 0">
+                AND t_base_bom_product.bom_id in
+                <foreach collection="bomIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_base_bom_product set deleted_flag = #{deletedFlag}
+        where bom_product_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_base_bom_product
+        set deleted_flag = #{deletedFlag}
+        where bom_product_id = #{bomProductId}
+    </update>
+
+</mapper>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.base.componentdict.dao.ComponentDictDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_component_dict.component_series_id,
+        t_component_dict.type_code,
+        t_component_dict.item_code,
+        t_component_dict.item_name,
+        t_component_dict.remark,
+        t_component_dict.company_id,
+        t_component_dict.version,
+        t_component_dict.create_user_id,
+        t_component_dict.create_user_name,
+        t_component_dict.create_time,
+        t_component_dict.update_user_id,
+        t_component_dict.update_user_name,
+        t_component_dict.update_time,
+        t_component_dict.deleted_flag
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage"
+            resultType="net.lab1024.sa.admin.module.business.base.componentdict.domain.vo.ComponentDictVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_component_dict t_component_dict
+        <where>
+            t_component_dict.deleted_flag = 0
+            AND t_component_dict.type_code = #{queryForm.typeCode}
+            <if test="queryForm.keywords != null and queryForm.keywords != ''">
+                AND (INSTR(t_component_dict.item_code, #{queryForm.keywords})
+                OR INSTR(t_component_dict.item_name,#{queryForm.keywords})
+                )
+            </if>
+        </where>
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_component_dict set deleted_flag = #{deletedFlag}
+        where component_series_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_component_dict
+        set deleted_flag = #{deletedFlag}
+        where component_series_id = #{componentSeriesId}
+    </update>
+
+</mapper>

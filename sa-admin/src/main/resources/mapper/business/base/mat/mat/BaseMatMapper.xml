@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.base.mat.mat.dao.BaseMatDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_base_mat.mat_id,
+        t_base_mat.mat_type_id,
+        t_base_mat.mat_no,
+        t_base_mat.mat_name,
+        t_base_mat.pro,
+        t_base_mat.color_id,
+        t_base_mat.calculation_unit,
+        t_base_mat.purchase_unit,
+        t_base_mat.conversion_factor,
+        t_base_mat.source_property,
+        t_base_mat.mat_image,
+        t_base_mat.weight_unit,
+        t_base_mat.weight_factor,
+        t_base_mat.remark,
+        t_base_mat.deleted_flag,
+        t_base_mat.company_id,
+        t_base_mat.version,
+        t_base_mat.create_user_id,
+        t_base_mat.create_user_name,
+        t_base_mat.create_time,
+        t_base_mat.update_user_id,
+        t_base_mat.update_user_name,
+        t_base_mat.update_time,
+        t_base_mat.invalid
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.base.mat.mat.domain.vo.BaseMatVO">
+        SELECT
+        <include refid="base_columns"/>,t_base_color.color_name
+        FROM t_base_mat t_base_mat
+        LEFT JOIN t_base_color t_base_color ON t_base_mat.color_id = t_base_color.color_id AND t_base_color.deleted_flag
+        = 0
+        <where>
+            AND t_base_mat.deleted_flag = 0
+            <if test="queryForm.keywords != null and queryForm.keywords != ''">
+                AND (
+                t_base_mat.mat_no LIKE concat('%',#{queryForm.keywords},'%')
+                OR t_base_mat.mat_name LIKE concat('%',#{queryForm.keywords},'%')
+                )
+            </if>
+            <if test="queryForm.invalid != null">
+                AND t_base_mat.invalid = #{queryForm.invalid}
+            </if>
+        </where>
+    </select>
+    <select id="getDetailById"
+            resultType="net.lab1024.sa.admin.module.business.base.mat.mat.domain.vo.BaseMatDetailVO">
+        SELECT
+        <include refid="base_columns"/>, t_base_mat_type.mat_type_name,
+        t_base_mat_type.mat_type_code,t_base_color.color_name,
+        t_base_mat.source_property source_property_backup
+        FROM t_base_mat t_base_mat
+        INNER JOIN t_base_mat_type t_base_mat_type ON t_base_mat.mat_type_id = t_base_mat_type.mat_type_id AND
+        t_base_mat_type.deleted_flag = 0
+        LEFT JOIN t_base_color t_base_color ON t_base_mat.color_id = t_base_color.color_id AND t_base_color.deleted_flag
+        = 0
+        WHERE t_base_mat.mat_id = #{matId}
+        AND t_base_mat.deleted_flag = 0
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_base_mat set deleted_flag = #{deletedFlag}
+        where mat_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_base_mat set deleted_flag = #{deletedFlag}
+        where mat_id = #{matId}
+    </update>
+
+</mapper>

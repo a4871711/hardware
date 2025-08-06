@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.purchase.request.dao.PurchaseRequestOrderDetailDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_purchase_request_order_detail.purchase_request_order_detail_id,
+        t_purchase_request_order_detail.purchase_request_order_id,
+        t_purchase_request_order_detail.sales_order_mat_id,
+        t_purchase_request_order_detail.production_qty,
+        t_purchase_request_order_detail.usage_amount,
+        t_purchase_request_order_detail.purchase_qty,
+        t_purchase_request_order_detail.cust_id,
+        t_purchase_request_order_detail.unit_purchase,
+        t_purchase_request_order_detail.amount,
+        t_purchase_request_order_detail.purchased_qty,
+        t_purchase_request_order_detail.available_stock,
+        t_purchase_request_order_detail.current_stock,
+        t_purchase_request_order_detail.status,
+        t_purchase_request_order_detail.audit_time,
+        t_purchase_request_order_detail.audit_user_id,
+        t_purchase_request_order_detail.audit_user_name,
+        t_purchase_request_order_detail.remark,
+        t_purchase_request_order_detail.company_id,
+        t_purchase_request_order_detail.version,
+        t_purchase_request_order_detail.create_user_id,
+        t_purchase_request_order_detail.create_user_name,
+        t_purchase_request_order_detail.create_time,
+        t_purchase_request_order_detail.update_user_id,
+        t_purchase_request_order_detail.update_user_name,
+        t_purchase_request_order_detail.update_time,
+        t_purchase_request_order_detail.deleted_flag,
+        t_purchase_request_order_detail.mat_id
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage"
+            resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_purchase_request_order_detail
+    </select>
+
+    <select id="findByPurchaseRequestOrderId"
+            resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailVO">
+        SELECT
+        <include refid="base_columns"/>
+        , t_base_mat.source_property
+        , t_base_mat.mat_no
+        , t_base_mat.mat_name
+        , t_base_mat.pro
+        , t_base_color.color_id
+        , t_base_color.color_name
+        , t_base_bom.product_code
+        , t_base_bom.product_name
+        , t_base_bom.product_color
+        , t_sales_order.order_code
+        , t_base_cust.cust_name
+        , t_base_mat_cust.price AS unitPrice
+        , t_base_bom.series_name
+        , t_base_bom.cust_product_name
+        , t_base_mat_type.mat_type_id
+        , t_base_mat_type.mat_type_name
+        , t_base_mat_type.mat_type_code
+        , t_base_mat.mat_image
+        FROM t_purchase_request_order_detail t_purchase_request_order_detail
+        LEFT JOIN t_sales_order_mat t_sales_order_mat ON t_purchase_request_order_detail.sales_order_mat_id =
+        t_sales_order_mat.sales_order_mat_id
+        LEFT JOIN t_sales_order t_sales_order ON t_sales_order_mat.sales_order_id = t_sales_order.sales_order_id
+        LEFT JOIN t_base_bom t_base_bom ON t_sales_order_mat.bom_id = t_base_bom.bom_id
+        LEFT JOIN t_base_mat t_base_mat ON t_purchase_request_order_detail.mat_id = t_base_mat.mat_id
+        LEFT JOIN t_base_color t_base_color ON t_base_mat.color_id = t_base_color.color_id
+        LEFT JOIN t_base_mat_cust t_base_mat_cust ON t_base_mat.mat_id = t_base_mat_cust.mat_id
+        AND t_base_mat_cust.master = 1
+        LEFT JOIN t_base_cust t_base_cust ON t_purchase_request_order_detail.cust_id = t_base_cust.cust_id
+        LEFT JOIN t_base_mat_type t_base_mat_type ON t_base_mat_type.mat_type_id = t_base_mat.mat_type_id
+        WHERE t_purchase_request_order_detail.purchase_request_order_id = #{purchaseRequestOrderId}
+        AND t_purchase_request_order_detail.deleted_flag = 0
+    </select>
+
+    <select id="queryDetailPage"
+            resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailInfoVO">
+        SELECT
+            pr.purchase_request_order_code,
+            so.order_code AS salesOrderCode,
+            prd.cust_id AS custId,
+            bc.cust_name AS custName,
+            bb.product_code AS productCode,
+            bb.product_name AS productName,
+            bm.mat_no AS matNo,
+            bm.mat_name AS matName,
+            prd.usage_amount AS usageAmount,
+            prd.create_time,
+            prd.create_user_name
+        FROM t_purchase_request_order_detail prd
+            INNER JOIN t_purchase_request_order pr ON pr.purchase_request_order_id = prd.purchase_request_order_id
+            LEFT JOIN t_sales_order_mat som ON prd.sales_order_mat_id = som.sales_order_mat_id
+            LEFT JOIN t_sales_order so ON so.sales_order_id = som.sales_order_id
+            LEFT JOIN t_base_bom bb ON som.bom_id = bb.bom_id
+            LEFT JOIN t_base_mat bm ON prd.mat_id = bm.mat_id
+            LEFT JOIN t_base_cust bc ON prd.cust_id = bc.cust_id
+        WHERE prd.status = 1
+            AND prd.deleted_flag = 0
+            AND NOT EXISTS (
+                SELECT 1
+                FROM t_purchase_order_detail pod
+                INNER JOIN t_purchase_order po ON po.purchase_order_id = pod.purchase_order_id
+                WHERE pod.purchase_request_order_detail_id = prd.purchase_request_order_detail_id
+                AND po.audit = 1
+                AND pod.deleted_flag = 0
+            )
+            <if test="queryForm != null">
+                <!-- 这里可以根据queryForm的字段动态追加查询条件 -->
+            </if>
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_purchase_request_order_detail set deleted_flag = #{deletedFlag}
+        where purchase_order_detail_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_purchase_request_order_detail
+        set deleted_flag = #{deletedFlag}
+        where purchase_order_detail_id = #{purchaseOrderDetailId}
+    </update>
+
+</mapper>

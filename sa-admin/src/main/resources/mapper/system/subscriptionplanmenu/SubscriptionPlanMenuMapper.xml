@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.system.subscriptionplanmenu.dao.SubscriptionPlanMenuDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_subscription_plan_menu.menu_id,
+        t_subscription_plan_menu.menu_name,
+        t_subscription_plan_menu.menu_type,
+        t_subscription_plan_menu.parent_id,
+        t_subscription_plan_menu.sort,
+        t_subscription_plan_menu.path,
+        t_subscription_plan_menu.component,
+        t_subscription_plan_menu.perms_type,
+        t_subscription_plan_menu.api_perms,
+        t_subscription_plan_menu.web_perms,
+        t_subscription_plan_menu.icon,
+        t_subscription_plan_menu.context_menu_id,
+        t_subscription_plan_menu.frame_flag,
+        t_subscription_plan_menu.frame_url,
+        t_subscription_plan_menu.cache_flag,
+        t_subscription_plan_menu.visible_flag,
+        t_subscription_plan_menu.disabled_flag,
+        t_subscription_plan_menu.deleted_flag,
+        t_subscription_plan_menu.subscription_plan,
+        t_subscription_plan_menu.version,
+        t_subscription_plan_menu.create_user_id,
+        t_subscription_plan_menu.create_user_name,
+        t_subscription_plan_menu.create_time,
+        t_subscription_plan_menu.update_user_id,
+        t_subscription_plan_menu.update_user_name,
+        t_subscription_plan_menu.update_time,
+        t_subscription_plan_menu.company_id
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.system.subscriptionplanmenu.domain.vo.SubscriptionPlanMenuVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_subscription_plan_menu
+        WHERE t_subscription_plan_menu.deleted_flag = 0
+    </select>
+    <select id="queryMenuList"
+            resultType="net.lab1024.sa.admin.module.system.subscriptionplanmenu.domain.vo.SubscriptionPlanMenuVO">
+        select *
+        from t_subscription_plan_menu AS m
+        where m.deleted_flag = #{deletedFlag}
+        <if test="disabledFlag != null">
+            and m.disabled_flag = #{disabledFlag}
+        </if>
+        <if test="menuTypeList != null and menuTypeList.size > 0">
+            and m.menu_type in
+            <foreach collection="menuTypeList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="subscriptionPlan != null">
+            and m.subscription_plan &lt;= #{subscriptionPlan}
+        </if>
+        order by m.parent_id desc, m.sort asc
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_subscription_plan_menu set deleted_flag = #{deletedFlag}
+        where menu_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_subscription_plan_menu set deleted_flag = #{deletedFlag}
+        where menu_id = #{menuId}
+    </update>
+
+    <select id="selectMenuIdByParentIdList" resultType="java.lang.Long">
+        <if test="menuIdList != null and menuIdList.size > 0">
+            select m.menu_id
+            from t_subscription_plan_menu AS m
+            where m.parent_id in
+            <foreach collection="menuIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+            and m.deleted_flag = 0
+        </if>
+    </select>
+</mapper>

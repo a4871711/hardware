@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.system.role.dao.RoleSubscriptionPlanMenuDao">
+
+    <delete id="deleteByRoleId">
+        delete
+        from t_role_menu
+        where role_id = #{roleId}
+    </delete>
+
+    <select id="selectMenuListByRoleIdList"
+            resultType="net.lab1024.sa.admin.module.system.subscriptionplanmenu.domain.entity.SubscriptionPlanMenuBaseEntity">
+        SELECT
+        m.*
+        FROM t_subscription_plan_menu m
+        LEFT JOIN t_role_menu rm ON rm.menu_id = m.menu_id
+        <where>
+            m.deleted_flag = 0
+            <if test="deletedFlag != null">
+                AND m.deleted_flag = #{deletedFlag}
+            </if>
+            <if test="roleIdList != null and roleIdList.size > 0">
+                AND rm.role_id IN
+                <foreach collection="roleIdList" open="(" close=")" item="item" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="companyId != null">
+                AND m.subscription_plan &lt;= (select subscription_plan from t_company where company_id = #{companyId} and m.deleted_flag = #{deletedFlag})
+            </if>
+        </where>
+        GROUP by m.menu_id
+        ORDER BY m.sort ASC
+    </select>
+
+    <select id="queryMenuIdByRoleId" resultType="java.lang.Long">
+        select menu_id
+        from t_role_menu
+        where role_id = #{roleId}
+    </select>
+
+    <select id="queryMenuList"
+            resultType="net.lab1024.sa.admin.module.system.menu.domain.vo.SubscriptionPlanMenuVOTemp">
+        select *
+        from t_menu AS m
+        where m.deleted_flag = #{deletedFlag}
+        <if test="disabledFlag != null">
+            and m.disabled_flag = #{disabledFlag}
+        </if>
+        <if test="menuTypeList != null and menuTypeList.size > 0">
+            and m.menu_type in
+            <foreach collection="menuTypeList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        order by m.parent_id desc, m.sort asc
+    </select>
+</mapper>

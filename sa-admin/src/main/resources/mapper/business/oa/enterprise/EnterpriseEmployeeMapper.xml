@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.oa.enterprise.dao.EnterpriseEmployeeDao">
+
+    <delete id="deleteByEnterpriseAndEmployeeIdList">
+        delete from t_oa_enterprise_employee where enterprise_id = #{enterpriseId} and employee_id in
+        <foreach collection="employeeIdList" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByEmployeeId">
+        delete from t_oa_enterprise_employee where employee_id = #{employeeId}
+    </delete>
+
+    <select id="selectByEnterpriseId"
+            resultType="net.lab1024.sa.admin.module.business.oa.enterprise.domain.entity.EnterpriseEmployeeEntity">
+        select * from t_oa_enterprise_employee where enterprise_id = #{enterpriseId}
+    </select>
+
+    <select id="selectByEnterpriseAndEmployeeIdList"
+            resultType="net.lab1024.sa.admin.module.business.oa.enterprise.domain.entity.EnterpriseEmployeeEntity">
+        select * from t_oa_enterprise_employee where enterprise_id = #{enterpriseId} and employee_id in
+        <foreach collection="employeeIdList" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="selectByEmployeeIdList"
+            resultType="net.lab1024.sa.admin.module.business.oa.enterprise.domain.vo.EnterpriseEmployeeVO">
+        SELECT
+        ee.*,
+        e.enterprise_name AS enterpriseName,
+        emp.actual_name AS employeeName
+        FROM t_oa_enterprise_employee ee
+        LEFT JOIN t_oa_enterprise e
+        ON ee.enterprise_id = e.enterprise_id
+        LEFT JOIN t_employee emp
+        ON ee.employee_id = emp.employee_id
+        WHERE ee.employee_id IN
+        <foreach collection="employeeIdList" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="selectByEnterpriseIdList"
+            resultType="net.lab1024.sa.admin.module.business.oa.enterprise.domain.vo.EnterpriseEmployeeVO">
+        SELECT
+        ee.*,
+        e.enterprise_name AS enterpriseName,
+        emp.*,
+        emp.actual_name AS employeeName
+        FROM t_oa_enterprise_employee ee
+        LEFT JOIN t_oa_enterprise e
+        ON ee.enterprise_id = e.enterprise_id
+        LEFT JOIN t_employee emp
+        ON ee.employee_id = emp.employee_id
+        WHERE ee.enterprise_id IN
+        <foreach collection="enterpriseIdList" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="selectEnterpriseIdByEmployeeId" resultType="java.lang.Long">
+        select enterprise_id from t_oa_enterprise_employee where employee_id = #{employeeId}
+    </select>
+
+    <select id="selectEmployeeIdByEnterpriseIdList" resultType="java.lang.Long">
+        select employee_id from t_oa_enterprise_employee where enterprise_id in
+        <foreach collection="enterpriseIdList" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="queryPageEmployeeList"
+            resultType="net.lab1024.sa.admin.module.business.oa.enterprise.domain.vo.EnterpriseEmployeeVO">
+        SELECT
+        ee.*,
+        e.enterprise_name AS enterpriseName,
+        emp.*,
+        emp.actual_name AS employeeName
+        FROM t_oa_enterprise_employee ee
+        LEFT JOIN t_oa_enterprise e
+        ON ee.enterprise_id = e.enterprise_id
+        LEFT JOIN t_employee emp
+        ON ee.employee_id = emp.employee_id
+        WHERE ee.enterprise_id = #{queryForm.enterpriseId}
+        <if test="queryForm.keyword != null and queryForm.keyword != ''">
+            AND (
+            INSTR(emp.actual_name, #{queryForm.keyword})
+            OR INSTR(emp.phone, #{queryForm.keyword})
+            OR INSTR(emp.login_name, #{queryForm.keyword})
+            )
+        </if>
+        <if test="queryForm.deletedFlag != null">
+            AND emp.deleted_flag = #{queryForm.deletedFlag}
+        </if>
+    </select>
+
+
+</mapper>

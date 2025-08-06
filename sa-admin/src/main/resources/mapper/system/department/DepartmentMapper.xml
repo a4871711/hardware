@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.system.department.dao.DepartmentDao">
+
+
+    <select id="listAll" resultType="net.lab1024.sa.admin.module.system.department.domain.vo.DepartmentVO">
+        SELECT
+            d.*,
+            emp.actual_name AS managerName,
+            pd.name AS parentName
+        FROM t_department d
+                 LEFT JOIN t_employee emp
+                           ON d.manager_id = emp.employee_id
+                 LEFT JOIN t_department pd
+                           ON d.parent_id = pd.department_id
+        WHERE d.deleted_flag = false
+        ORDER BY d.sort DESC
+    </select>
+
+
+    <select id="countSubDepartment" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM t_department
+        WHERE parent_id = #{departmentId}
+          and deleted_flag = false
+    </select>
+
+
+</mapper>

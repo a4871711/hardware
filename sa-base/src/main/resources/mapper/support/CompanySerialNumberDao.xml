@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.base.module.support.serialnumber.dao.CompanySerialNumberDao">
+    <select id="findAllBySerialNumberId"
+            resultType="net.lab1024.sa.base.module.support.serialnumber.domain.CompanySerialNumberEntity">
+        select *
+        from t_company_serial_number
+        <where>
+            serial_number_id in
+            <foreach collection="list" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+    <update id="updateLastNumberAndTime">
+        update t_company_serial_number
+        set last_number = #{lastNumber},
+            last_time   = #{lastTime}
+        where serial_number_id = #{serialNumberId}
+          and company_id = #{companyId}
+    </update>
+</mapper>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.system.setting.dao.SettingDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_setting.setting_id,
+        t_setting.param_id,
+        t_setting.first_menu_name,
+        t_setting.second_menu_name,
+        t_setting.param_description,
+        t_setting.param_value,
+        t_setting.version,
+        t_setting.create_user_id,
+        t_setting.create_user_name,
+        t_setting.create_time,
+        t_setting.update_user_id,
+        t_setting.update_user_name,
+        t_setting.update_time,
+        t_setting.deleted_flag
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.system.setting.domain.vo.SettingVO">
+        SELECT
+        t_setting.setting_id,
+        t_company_setting.company_setting_id,
+        t_setting.param_id,
+        t_setting.first_menu_name,
+        t_setting.second_menu_name,
+        COALESCE(t_company_setting.param_description, t_setting.param_description) as param_description,
+        COALESCE(t_company_setting.param_value, t_setting.param_value) as param_value,
+        COALESCE(t_company_setting.version, t_setting.version) as version,
+        t_setting.create_user_id,
+        t_setting.create_user_name,
+        t_setting.create_time,
+        t_setting.update_user_id,
+        t_setting.update_user_name,
+        t_setting.update_time,
+        t_setting.deleted_flag
+        FROM t_setting t_setting
+        LEFT JOIN t_company_setting t_company_setting ON t_setting.setting_id = t_company_setting.setting_id AND
+        t_company_setting.company_id = #{companyId}
+        <where>
+            <!--参数id-->
+            <if test="queryForm.paramId != null and queryForm.paramId != ''">
+                AND INSTR(t_setting.param_id,#{queryForm.paramId})
+            </if>
+            <!--主菜单名称-->
+            <if test="queryForm.firstMenuName != null and queryForm.firstMenuName != ''">
+                AND INSTR(t_setting.first_menu_name,#{queryForm.firstMenuName})
+            </if>
+            <if test="queryForm.secondMenuName != null and queryForm.secondMenuName != ''">
+                AND INSTR(t_setting.second_menu_name,#{queryForm.secondMenuName})
+            </if>
+        </where>
+    </select>
+
+    <select id="findById" resultType="net.lab1024.sa.admin.module.system.setting.domain.vo.SettingVO">
+        SELECT
+        t_setting.setting_id,
+        t_company_setting.company_setting_id,
+        t_setting.param_id,
+        t_setting.first_menu_name,
+        t_setting.second_menu_name,
+        COALESCE(t_company_setting.param_description, t_setting.param_description) as param_description,
+        COALESCE(t_company_setting.param_value, t_setting.param_value) as param_value,
+        COALESCE(t_company_setting.version, t_setting.version) as version,
+        t_setting.create_user_id,
+        t_setting.create_user_name,
+        t_setting.create_time,
+        t_setting.update_user_id,
+        t_setting.update_user_name,
+        t_setting.update_time,
+        t_setting.deleted_flag
+        FROM t_setting t_setting
+        LEFT JOIN t_company_setting t_company_setting ON t_setting.setting_id = t_company_setting.setting_id AND
+        t_company_setting.company_id = #{companyId}
+        <where>
+            AND t_setting.setting_id = #{settingId}
+        </where>
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_setting set deleted_flag = #{deletedFlag}
+        where setting_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_setting
+        set deleted_flag = #{deletedFlag}
+        where setting_id = #{settingId}
+    </update>
+
+</mapper>

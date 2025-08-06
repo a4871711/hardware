@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.sales.order.dao.SalesOrderDetailDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_sales_order_detail.sales_order_detail_id,
+        t_sales_order_detail.sales_order_id,
+        t_sales_order_detail.bom_id,
+        t_sales_order_detail.order_qty,
+        t_sales_order_detail.production_qty,
+        t_sales_order_detail.unit_price,
+        t_sales_order_detail.tax_unit_price,
+        t_sales_order_detail.amount,
+        t_sales_order_detail.tax_total_amount,
+        t_sales_order_detail.delivery_time,
+        t_sales_order_detail.remark,
+        t_sales_order_detail.company_id,
+        t_sales_order_detail.version,
+        t_sales_order_detail.create_user_id,
+        t_sales_order_detail.create_user_name,
+        t_sales_order_detail.create_time,
+        t_sales_order_detail.update_user_id,
+        t_sales_order_detail.update_user_name,
+        t_sales_order_detail.update_time,
+        t_sales_order_detail.deleted_flag,
+        t_sales_order_detail.tax_amount
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.sales.order.domain.vo.SalesOrderDetailVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_sales_order_detail
+    </select>
+
+
+
+    <select id="findBySalesOrderId"
+            resultType="net.lab1024.sa.admin.module.business.sales.order.domain.vo.SalesOrderDetailVO">
+        SELECT
+        <include refid="base_columns"/>,
+        t_base_bom.product_code,
+        t_base_bom.product_name,
+        t_base_bom.cust_product_code,
+        t_base_bom.cust_product_name,
+        t_base_bom.series_name,
+        t_base_bom.product_color,
+        t_base_bom.product_eng_color,
+        t_base_bom.product_image
+        FROM t_sales_order_detail t_sales_order_detail
+        INNER JOIN t_base_bom t_base_bom on t_sales_order_detail.bom_id = t_base_bom.bom_id
+        WHERE t_sales_order_detail.sales_order_id = #{salesOrderId}
+        and t_sales_order_detail.deleted_flag = 0
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_sales_order_detail set deleted_flag = #{deletedFlag}
+        where sales_order_detail_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_sales_order_detail
+        set deleted_flag = #{deletedFlag}
+        where sales_order_detail_id = #{salesOrderDetailId}
+    </update>
+
+</mapper>

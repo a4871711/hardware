@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.system.role.dao.RoleDao">
+
+    <resultMap id="RoleEntity"
+               type="net.lab1024.sa.admin.module.system.role.domain.entity.RoleBaseEntity"></resultMap>
+
+
+    <select id="getByRoleName" resultMap="RoleEntity">
+        SELECT *
+        FROM t_role
+        WHERE role_name = #{roleName}
+          and deleted_flag = false
+    </select>
+
+
+    <select id="getByRoleCode" resultMap="RoleEntity">
+        SELECT *
+        FROM t_role
+        WHERE role_code = #{roleCode}
+          and deleted_flag = false
+    </select>
+    <select id="selectListByKeywords" resultType="net.lab1024.sa.admin.module.system.role.domain.entity.RoleBaseEntity">
+        SELECT *
+        FROM t_role
+        <where>
+            deleted_flag = false
+            <if test="keywords != null and keywords != ''">
+                AND (INSTR(role_name, #{keywords}) OR INSTR(role_code, #{keywords}))
+            </if>
+        </where>
+    </select>
+</mapper>

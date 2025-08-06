@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.base.module.support.codegenerator.dao.CodeGeneratorDao">
+
+    <select id="countByTableName" resultType="Long">
+        select count(*)
+        from information_schema.tables
+        where table_schema = (select database())
+          and table_name = #{tableName}
+    </select>
+
+    <select id="selectTableColumn"
+            resultType="net.lab1024.sa.base.module.support.codegenerator.domain.vo.TableColumnVO">
+        select *
+        from information_schema.columns
+        where table_schema = (select database())
+          and table_name = #{tableName}
+        order by ordinal_position
+    </select>
+
+    <select id="queryTableList"
+            resultType="net.lab1024.sa.base.module.support.codegenerator.domain.vo.TableVO">
+        SELECT
+        t.table_name AS tableName,
+        t.table_comment AS tableComment,
+        t.create_time AS createTime,
+        t.update_time AS updateTime,
+        c.update_time AS configTime
+        FROM information_schema.tables t
+        LEFT JOIN t_code_generator_config c
+        ON t.table_name = c.table_name
+        WHERE t.table_schema = (SELECT DATABASE())
+        <if test="queryForm.tableNameKeywords != null and queryForm.tableNameKeywords != ''">
+            AND INSTR(t.table_name, #{queryForm.tableNameKeywords})
+        </if>
+    </select>
+</mapper>

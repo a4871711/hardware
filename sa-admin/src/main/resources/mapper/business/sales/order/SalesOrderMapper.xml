@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.sales.order.dao.SalesOrderDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_sales_order.sales_order_id,
+        t_sales_order.order_code,
+        t_sales_order.order_time,
+        t_sales_order.delivery_time,
+        t_sales_order.cust_id,
+        t_sales_order.shipping_address,
+        t_sales_order.tax_type,
+        t_sales_order.tax_rate,
+        t_sales_order.production_type,
+        t_sales_order.remark,
+        t_sales_order.invalid,
+        t_sales_order.audit,
+        t_sales_order.company_id,
+        t_sales_order.version,
+        t_sales_order.create_user_id,
+        t_sales_order.create_user_name,
+        t_sales_order.create_time,
+        t_sales_order.update_user_id,
+        t_sales_order.update_user_name,
+        t_sales_order.update_time,
+        t_sales_order.deleted_flag
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.sales.order.domain.vo.SalesOrderVO">
+        SELECT distinct
+        <include refid="base_columns"/>
+        FROM t_sales_order t_sales_order
+        <if test="queryForm.alreadySelectedSoFilter != null and queryForm.alreadySelectedSoFilter == true">
+            INNER JOIN t_sales_order_mat t_sales_order_mat ON t_sales_order.sales_order_id =
+            t_sales_order_mat.sales_order_id
+            INNER JOIN t_base_mat t_base_mat ON t_sales_order_mat.mat_id = t_base_mat.mat_id
+            LEFT JOIN t_purchase_request_order_detail t_purchase_request_order_detail
+            ON t_purchase_request_order_detail.sales_order_mat_id = t_sales_order_mat.sales_order_mat_id
+        </if>
+        WHERE t_sales_order.deleted_flag = 0
+        <if test="queryForm.alreadySelectedSoFilter != null and queryForm.alreadySelectedSoFilter == true">
+            AND (t_purchase_request_order_detail.status IS NULL OR t_purchase_request_order_detail.status != 1)
+            AND t_base_mat.source_property = 'MAT_SOURCE_PROPERTY_1'
+        </if>
+    </select>
+
+
+
+    <select id="querySearch"
+            resultType="net.lab1024.sa.admin.module.business.sales.order.domain.vo.SalesOrderQuerySearchVO">
+        SELECT
+        <include refid="base_columns"/>,
+        t_base_cust.cust_name,
+        t_base_bom.product_code,
+        t_base_bom.product_name, 
+        t_base_bom.cust_product_code,
+        t_base_bom.cust_product_name,
+        t_base_bom.series_name,
+        t_base_bom.product_color,
+        t_base_bom.product_eng_color,
+        t_base_bom.product_class,
+        t_base_bom.product_image,
+        t_sales_order_detail.order_qty,
+        t_sales_order_detail.production_qty,
+        t_sales_order_detail.unit_price,
+        t_sales_order_detail.tax_unit_price,
+        t_sales_order_detail.amount,
+        t_sales_order_detail.tax_total_amount,
+        t_sales_order_detail.remark,
+        t_sales_order_detail.tax_amount
+        FROM t_sales_order t_sales_order
+        LEFT JOIN t_base_cust t_base_cust on t_sales_order.cust_id = t_base_cust.cust_id
+        LEFT JOIN t_sales_order_detail t_sales_order_detail on t_sales_order.sales_order_id =
+        t_sales_order_detail.sales_order_id AND t_sales_order_detail.deleted_flag = 0
+        LEFT JOIN t_base_bom t_base_bom on t_sales_order_detail.bom_id = t_base_bom.bom_id
+        WHERE t_sales_order.deleted_flag = 0
+    </select>
+
+    <select id="findById" resultType="net.lab1024.sa.admin.module.business.sales.order.domain.vo.SalesOrderVO">
+        SELECT
+        <include refid="base_columns"/>,
+        t_base_cust.cust_name
+        FROM t_sales_order t_sales_order
+        LEFT JOIN t_base_cust t_base_cust on t_sales_order.cust_id = t_base_cust.cust_id
+        WHERE t_sales_order.sales_order_id = #{salesOrderId}
+        and t_sales_order.deleted_flag = 0
+    </select>
+
+
+    <update id="batchUpdateDeleted">
+        update t_sales_order set deleted_flag = #{deletedFlag}
+        where sales_order_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_sales_order
+        set deleted_flag = #{deletedFlag}
+        where sales_order_id = #{salesOrderId}
+    </update>
+
+</mapper>

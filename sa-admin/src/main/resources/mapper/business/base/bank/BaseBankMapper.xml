@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.base.bank.dao.BaseBankDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_base_bank.bank_id,
+        t_base_bank.account_no,
+        t_base_bank.account_name,
+        t_base_bank.account_type,
+        t_base_bank.disabled_flag,
+        t_base_bank.company_id,
+        t_base_bank.version,
+        t_base_bank.create_user_id,
+        t_base_bank.create_user_name,
+        t_base_bank.create_time,
+        t_base_bank.update_user_id,
+        t_base_bank.update_user_name,
+        t_base_bank.update_time,
+        t_base_bank.deleted_flag,
+        t_base_bank.account_bank,
+        t_base_bank.account_amount,
+        t_base_bank.cust_account
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.base.bank.domain.vo.BaseBankVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_base_bank
+        <where>
+            t_base_bank.deleted_flag = 0
+            AND t_base_bank.cust_account = 0
+            <!--银行账号-->
+            <if test="queryForm.accountNo != null and queryForm.accountNo != ''">
+                AND INSTR(t_base_bank.account_no,#{queryForm.accountNo})
+            </if>
+            <!--账号名称-->
+            <if test="queryForm.accountName != null and queryForm.accountName != ''">
+                AND INSTR(t_base_bank.account_name,#{queryForm.accountName})
+            </if>
+            <!--账号类型(公/私) 账号-->
+            <if test="queryForm.accountType != null">
+                AND t_base_bank.account_type = #{queryForm.accountType}
+            </if>
+        </where>
+
+    </select>
+    <select id="getBankListByCustId"
+            resultType="net.lab1024.sa.admin.module.business.base.bank.domain.vo.BaseBankVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_base_bank t_base_bank
+        INNER JOIN t_base_cust_bank t_base_cust_bank ON t_base_bank.bank_id = t_base_cust_bank.bank_id
+        WHERE t_base_bank.deleted_flag = 0
+        AND t_base_cust_bank.cust_id = #{custId}
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_base_bank set deleted_flag = #{deletedFlag}
+        where bank_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_base_bank
+        set deleted_flag = #{deletedFlag}
+        where bank_id = #{bankId}
+    </update>
+
+</mapper>

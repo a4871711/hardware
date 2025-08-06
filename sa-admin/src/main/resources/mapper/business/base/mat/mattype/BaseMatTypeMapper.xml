@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.base.mat.mattype.dao.BaseMatTypeDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_base_mat_type.mat_type_id,
+        t_base_mat_type.mat_type_code,
+        t_base_mat_type.mat_type_name,
+        t_base_mat_type.mat_type_parent_id,
+        t_base_mat_type.remark,
+        t_base_mat_type.deleted_flag,
+        t_base_mat_type.company_id,
+        t_base_mat_type.version,
+        t_base_mat_type.create_user_id,
+        t_base_mat_type.create_user_name,
+        t_base_mat_type.create_time,
+        t_base_mat_type.update_user_id,
+        t_base_mat_type.update_user_name,
+        t_base_mat_type.update_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.base.mat.mattype.domain.vo.BaseMatTypeVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_base_mat_type
+    </select>
+
+    <select id="selectByKeywords"
+            resultType="net.lab1024.sa.admin.module.business.base.mat.mattype.domain.vo.BaseMatTypeVO">
+        SELECT
+        <include refid="base_columns"/>
+        FROM t_base_mat_type
+        WHERE t_base_mat_type.deleted_flag = 0
+        <if test="keywords != null and keywords != ''">
+            AND ( INSTR(t_base_mat_type.mat_type_name, #{keywords})
+            OR INSTR(t_base_mat_type.mat_type_code, #{keywords}))
+        </if>
+    </select>
+
+    <select id="findTopParentById"
+            resultType="net.lab1024.sa.admin.module.business.base.mat.mattype.domain.vo.BaseMatTypeVO">
+        WITH RECURSIVE parent_chain AS (SELECT mat_type_id,
+                                               mat_type_parent_id,
+                                               mat_type_code,
+                                               mat_type_name,
+                                               remark,
+                                               company_id
+                                        FROM t_base_mat_type
+                                        WHERE mat_type_id = #{matTypeId} -- 替换为你要查的ID
+                                        UNION ALL
+                                        SELECT parent.mat_type_id,
+                                               parent.mat_type_parent_id,
+                                               parent.mat_type_code,
+                                               parent.mat_type_name,
+                                               parent.remark,
+                                               parent.company_id
+                                        FROM t_base_mat_type parent
+                                                 JOIN parent_chain child ON parent.mat_type_id = child.mat_type_parent_id
+                                        WHERE parent.mat_type_parent_id != parent.mat_type_id -- 避免自引用死循环
+        )
+        SELECT *
+        FROM parent_chain
+        WHERE mat_type_parent_id = 0
+        LIMIT 1;
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_base_mat_type set deleted_flag = #{deletedFlag}
+        where mat_type_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_base_mat_type set deleted_flag = #{deletedFlag}
+        where mat_type_id = #{matTypeId}
+    </update>
+
+</mapper>

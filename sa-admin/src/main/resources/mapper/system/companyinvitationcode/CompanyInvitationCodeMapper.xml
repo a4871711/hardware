@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.system.invitationcode.dao.CompanyInvitationCodeDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_company_invitation_code.invitation_code_id,
+        t_company_invitation_code.subscription_plan,
+        t_company_invitation_code.subscription_start_date,
+        t_company_invitation_code.subscription_end_date,
+        t_company_invitation_code.invitation_code,
+        t_company_invitation_code.company_id,
+        t_company_invitation_code.version,
+        t_company_invitation_code.create_user_id,
+        t_company_invitation_code.create_user_name,
+        t_company_invitation_code.create_time,
+        t_company_invitation_code.update_user_id,
+        t_company_invitation_code.update_user_name,
+        t_company_invitation_code.update_time,
+        t_company_invitation_code.deleted_flag
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage"
+            resultType="net.lab1024.sa.admin.module.system.invitationcode.domain.vo.CompanyInvitationCodeVO">
+        SELECT
+        <include refid="base_columns"/>,t_company.company_name
+        FROM t_company_invitation_code t_company_invitation_code
+        LEFT JOIN t_company t_company ON t_company.company_id = t_company_invitation_code.company_id
+        <where>
+            <if test="queryForm.invitationCode != null and queryForm.invitationCode != ''">
+                AND t_company_invitation_code.invitation_code like '%${queryForm.invitationCode}%'
+            </if>
+            <if test="queryForm.subscriptionPlan != null ">
+                AND t_company_invitation_code.subscription_plan = #{queryForm.subscriptionPlan}
+            </if>
+            AND t_company_invitation_code.deleted_flag = 0
+        </where>
+    </select>
+
+    <update id="batchUpdateDeleted">
+        update t_company_invitation_code set deleted_flag = #{deletedFlag}
+        where invitation_code_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_company_invitation_code
+        set deleted_flag = #{deletedFlag}
+        where invitation_code_id = #{invitationCodeId}
+    </update>
+
+</mapper>

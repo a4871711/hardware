@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.purchase.request.dao.PurchaseRequestOrderDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        t_purchase_request_order.purchase_request_order_id,
+        t_purchase_request_order.purchase_request_order_code,
+        t_purchase_request_order.company_id,
+        t_purchase_request_order.version,
+        t_purchase_request_order.deleted_flag,
+        t_purchase_request_order.invalid
+    </sql>
+
+
+    <!-- 分页查询 -->
+    <select id="queryPage"
+            resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderVO">
+        SELECT
+        <include refid="base_columns"/>,
+        t_sales_order.order_code,
+        t_sales_order_mat.mat_id,
+        GROUP_CONCAT(DISTINCT t_base_bom.product_name SEPARATOR ',') AS product_name,
+        GROUP_CONCAT(DISTINCT t_base_bom.product_code SEPARATOR ',') AS product_code,
+        GROUP_CONCAT(DISTINCT t_base_bom.product_color SEPARATOR ',') AS product_color,
+        t_base_mat.mat_no,
+        t_base_mat.mat_name,
+        t_base_mat.pro,
+        t_base_mat.color_id,
+        t_base_color.color_name,
+        t_purchase_request_order_detail.status,
+        t_purchase_request_order_detail.update_time,
+        SUM(t_purchase_request_order_detail.production_qty) AS production_qty,
+        SUM(t_purchase_request_order_detail.usage_amount) AS usage_amount,
+        t_purchase_request_order_detail.purchase_qty,
+        t_purchase_request_order_detail.cust_id,
+        t_base_cust.cust_name,
+        t_purchase_request_order_detail.unit_purchase,
+        t_purchase_request_order_detail.remark,
+        t_purchase_request_order_detail.create_user_name,
+        t_purchase_request_order_detail.create_time,
+        t_purchase_request_order_detail.audit_user_name,
+        t_purchase_request_order_detail.audit_time,
+        t_purchase_request_order_detail.update_user_name
+        FROM t_purchase_request_order t_purchase_request_order
+        LEFT JOIN t_purchase_request_order_detail t_purchase_request_order_detail ON
+        t_purchase_request_order.purchase_request_order_id = t_purchase_request_order_detail.purchase_request_order_id
+        LEFT JOIN t_sales_order_mat t_sales_order_mat ON t_purchase_request_order_detail.sales_order_mat_id =
+        t_sales_order_mat.sales_order_mat_id
+        LEFT JOIN t_sales_order t_sales_order ON t_sales_order_mat.sales_order_id = t_sales_order.sales_order_id
+        LEFT JOIN t_base_bom t_base_bom ON t_base_bom.bom_id = t_sales_order_mat.bom_id
+        LEFT JOIN t_base_mat t_base_mat ON t_base_mat.mat_id = t_sales_order_mat.mat_id
+        LEFT JOIN t_base_color t_base_color ON t_base_color.color_id = t_base_mat.color_id
+        LEFT JOIN t_base_cust t_base_cust ON t_base_cust.cust_id = t_purchase_request_order_detail.cust_id
+        <if test="queryForm.alreadySelectedSoFilter != null and queryForm.alreadySelectedSoFilter == true">
+            LEFT JOIN t_purchase_order_detail t_purchase_order_detail
+            ON t_purchase_order_detail.purchase_request_order_id = t_purchase_request_order.purchase_request_order_id
+            LEFT JOIN t_purchase_order t_purchase_order ON t_purchase_order.purchase_order_id =
+            t_purchase_order_detail.purchase_order_id
+        </if>
+        <where>
+            t_purchase_request_order.deleted_flag = 0
+            <if test="queryForm.alreadySelectedSoFilter != null and queryForm.alreadySelectedSoFilter == true">
+                AND t_purchase_order.audit != 1
+            </if>
+        </where>
+        GROUP BY t_sales_order.order_code, t_sales_order_mat.mat_id
+        ORDER BY t_purchase_request_order.create_time DESC
+    </select>
+
+
+    <select id="isReferenced"
+            resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderVO">
+        SELECT
+        distinct<include refid="base_columns"/>,t_sales_order.order_code
+        FROM t_purchase_request_order t_purchase_request_order
+        INNER JOIN t_purchase_request_order_detail t_purchase_request_order_detail
+        ON t_purchase_request_order.purchase_request_order_id =
+        t_purchase_request_order_detail.purchase_request_order_id
+        INNER JOIN t_sales_order_mat t_sales_order_mat
+        ON t_purchase_request_order_detail.sales_order_mat_id = t_sales_order_mat.sales_order_mat_id
+        INNER JOIN t_sales_order t_sales_order ON t_sales_order.sales_order_id = t_sales_order_mat.sales_order_id
+        <where>
+            t_purchase_request_order.deleted_flag = 0
+            <if test="form.salesOrderIds != null and form.salesOrderIds.size() > 0">
+                AND t_sales_order_mat.sales_order_id IN
+                <foreach collection="form.salesOrderIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+
+    <update id="batchUpdateDeleted">
+        update t_purchase_request_order set deleted_flag = #{deletedFlag}
+        where purchase_request_order_id in
+        <foreach collection="idList" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+
+    <update id="updateDeleted">
+        update t_purchase_request_order
+        set deleted_flag = #{deletedFlag}
+        where purchase_request_order_id = #{purchaseRequestOrderId}
+    </update>
+
+</mapper>
