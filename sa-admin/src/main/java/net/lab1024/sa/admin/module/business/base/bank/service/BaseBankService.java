@@ -40,8 +40,7 @@ public class BaseBankService {
     public PageResult<BaseBankVO> queryPage(BaseBankQueryForm queryForm) {
         Page<?> page = SmartPageUtil.convert2PageQuery(queryForm);
         List<BaseBankVO> list = baseBankDao.queryPage(page, queryForm);
-        PageResult<BaseBankVO> pageResult = SmartPageUtil.convert2PageResult(page, list);
-        return pageResult;
+        return SmartPageUtil.convert2PageResult(page, list);
     }
 
     /**
@@ -56,8 +55,7 @@ public class BaseBankService {
     public ResponseDTO<BaseBankVO> addCust(@Valid BaseBankAddForm addForm) {
         BaseBankEntity baseBankEntity = SmartBeanUtil.copy(addForm, BaseBankEntity.class);
         baseBankDao.insert(baseBankEntity);
-        BaseBankEntity result = baseBankDao.selectById(baseBankEntity.getBankId());
-        return ResponseDTO.ok(SmartBeanUtil.copy(result, BaseBankVO.class));
+        return ResponseDTO.ok(SmartBeanUtil.copy(baseBankEntity, BaseBankVO.class));
     }
 
     /**
