@@ -1,6 +1,5 @@
 package net.lab1024.sa.admin.module.business.base.bom.manager;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.lab1024.sa.admin.module.business.base.bom.dao.BaseBomProductDao;
 import net.lab1024.sa.admin.module.business.base.bom.domain.entity.BaseBomProductEntity;
@@ -18,9 +17,9 @@ public class BaseBomProductManager extends ServiceImpl<BaseBomProductDao, BaseBo
 
 
     public void deleteByBomId(Long bomId) {
-        LambdaUpdateWrapper<BaseBomProductEntity> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(BaseBomProductEntity::getBomId, bomId);
-        wrapper.set(BaseBomProductEntity::getDeletedFlag, true);
-        this.update(null, wrapper);
+        this.lambdaUpdate()
+                .eq(BaseBomProductEntity::getBomId, bomId)
+                .set(BaseBomProductEntity::getDeletedFlag, true)
+                .update();
     }
 }

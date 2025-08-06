@@ -26,9 +26,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 多级BOM-主表 Service
@@ -213,30 +214,19 @@ public class BaseBomService {
     }
 
     public List<BaseBomProductVO> buildBomTree(List<BaseBomProductVO> bomProductList) {
-        // 1. 以matId为key，建立映射
-        Map<Long, BaseBomProductVO> idMap = new HashMap<>();
-        for (BaseBomProductVO item : bomProductList) {
-            idMap.put(item.getBomProductId(), item);
-            // 确保每个节点的children初始化
-            if (item.getChildren() == null) {
-                item.setChildren(new ArrayList<>());
-            }
-        }
+        // 构建以 bomProductId 为 key 的映射，并初始化 children
+        Map<Long, BaseBomProductVO> idMap = bomProductList.stream()
+                .peek(item -> item.setChildren(new ArrayList<>()))
+                .collect(Collectors.toMap(BaseBomProductVO::getBomProductId, Function.identity()));
 
-        // 2. 构建树结构
+        // 构建树结构
         List<BaseBomProductVO> rootList = new ArrayList<>();
         for (BaseBomProductVO item : bomProductList) {
-            Long parentId = item.getParentMatId();
-            if (parentId == null || parentId == 0) {
-                rootList.add(item);
+            BaseBomProductVO parent = idMap.get(item.getParentMatId());
+            if (parent != null) {
+                parent.getChildren().add(item);
             } else {
-                BaseBomProductVO parent = idMap.get(parentId);
-                if (parent != null) {
-                    parent.getChildren().add(item);
-                } else {
-                    // 没找到父节点，视为顶层
-                    rootList.add(item);
-                }
+                rootList.add(item);
             }
         }
         return rootList;
