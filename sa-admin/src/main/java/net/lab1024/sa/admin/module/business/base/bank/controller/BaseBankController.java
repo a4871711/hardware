@@ -61,7 +61,7 @@ public class BaseBankController {
 
     @Operation(summary = "单个删除 @author 赵嘉伟")
     @GetMapping("/baseBank/delete/{bankId}")
-    public ResponseDTO<String> batchDelete(@PathVariable Long bankId) {
+    public ResponseDTO<String> delete(@PathVariable Long bankId) {
         return baseBankService.delete(bankId);
     }
 }
