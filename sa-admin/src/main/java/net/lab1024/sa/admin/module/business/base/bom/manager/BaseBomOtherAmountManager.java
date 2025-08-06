@@ -1,6 +1,5 @@
 package net.lab1024.sa.admin.module.business.base.bom.manager;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import net.lab1024.sa.admin.module.business.base.bom.dao.BaseBomOtherAmountDao;
 import net.lab1024.sa.admin.module.business.base.bom.domain.entity.BaseBomOtherAmountEntity;
@@ -18,9 +17,9 @@ public class BaseBomOtherAmountManager extends ServiceImpl<BaseBomOtherAmountDao
 
 
     public void deleteByBomId(Long bomId) {
-        LambdaUpdateWrapper<BaseBomOtherAmountEntity> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(BaseBomOtherAmountEntity::getBomId, bomId);
-        wrapper.set(BaseBomOtherAmountEntity::getDeletedFlag, true);
-        this.update(null, wrapper);
+        this.lambdaUpdate()
+                .eq(BaseBomOtherAmountEntity::getBomId, bomId)
+                .set(BaseBomOtherAmountEntity::getDeletedFlag, true)
+                .update();
     }
 }
