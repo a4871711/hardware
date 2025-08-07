@@ -70,6 +70,18 @@ public class PurchaseOrderEntity extends CompanyBaseEntity {
 
     private Boolean audit;
 
+    private LocalDateTime auditTime;
+
+    private String auditUserName;
+
+    private Long auditUserId;
+
     private Boolean invalid;
+
+    private LocalDateTime invalidTime;
+
+    private String invalidUserName;
+
+    private Long invalidUserId;
 
 }

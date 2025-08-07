@@ -81,6 +81,7 @@
     <select id="queryDetailPage"
             resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailInfoVO">
         SELECT
+            prd.purchase_request_order_detail_id,
             pr.purchase_request_order_code,
             so.order_code AS salesOrderCode,
             prd.cust_id AS custId,

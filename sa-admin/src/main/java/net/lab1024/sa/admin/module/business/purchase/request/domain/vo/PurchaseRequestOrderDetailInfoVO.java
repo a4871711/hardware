@@ -14,6 +14,9 @@ import java.math.BigDecimal;
 @Data
 public class PurchaseRequestOrderDetailInfoVO extends CompanyBaseEntity {
 
+    @Schema(description = "采购申请单明细ID")
+    private Long purchaseRequestOrderDetailId;
+
     @Schema(description = "采购申请单号")
     private String purchaseRequestOrderCode;
 

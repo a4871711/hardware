@@ -5,26 +5,35 @@
     <!-- 查询结果列 -->
     <sql id="base_columns">
         t_purchase_order.purchase_order_id,
-        t_purchase_order.purchase_order_code,
-        t_purchase_order.delivery_date,
-        t_purchase_order.receive_date,
-        t_purchase_order.cust_id,
-        t_purchase_order.tax_type,
-        t_purchase_order.tax_rate,
-        t_purchase_order.receive_address,
-        t_purchase_order.remark,
-        t_purchase_order.company_id,
-        t_purchase_order.version,
-        t_purchase_order.create_user_id,
-        t_purchase_order.create_user_name,
-        t_purchase_order.create_time,
-        t_purchase_order.update_user_id,
-        t_purchase_order.update_user_name,
-        t_purchase_order.update_time,
-        t_purchase_order.deleted_flag,
-        t_purchase_order.invalid
-    </sql>
+    t_purchase_order.purchase_order_code,
+    t_purchase_order.delivery_date,
+    t_purchase_order.receive_date,
+    t_purchase_order.cust_id,
+    t_purchase_order.tax_type,
+    t_purchase_order.tax_rate,
+    t_purchase_order.receive_address,
+    t_purchase_order.remark,
 
+    t_purchase_order.audit,
+    t_purchase_order.audit_user_id,
+    t_purchase_order.audit_user_name,
+    t_purchase_order.audit_time,
+
+    t_purchase_order.invalid,
+    t_purchase_order.invalid_user_id,
+    t_purchase_order.invalid_user_name,
+    t_purchase_order.invalid_time,
+
+    t_purchase_order.company_id,
+    t_purchase_order.version,
+    t_purchase_order.create_user_id,
+    t_purchase_order.create_user_name,
+    t_purchase_order.create_time,
+    t_purchase_order.update_user_id,
+    t_purchase_order.update_user_name,
+    t_purchase_order.update_time,
+    t_purchase_order.deleted_flag
+    </sql>
     <!-- 分页查询 -->
     <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.purchase.order.domain.vo.PurchaseOrderVO">
         SELECT
