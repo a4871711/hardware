@@ -9,6 +9,7 @@ import net.lab1024.sa.admin.module.business.purchase.request.domain.form.*;
 import net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailDataVO;
 import net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderVO;
 import net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailInfoVO;
+import net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailVO;
 import net.lab1024.sa.admin.module.business.purchase.request.service.PurchaseRequestOrderService;
 import net.lab1024.sa.admin.module.business.purchase.request.service.PurchaseRequestOrderDetailService;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -47,6 +48,12 @@ public class PurchaseRequestOrderController {
     @PostMapping("/purchaseRequestOrder/detail/queryPage")
     public ResponseDTO<PageResult<PurchaseRequestOrderDetailInfoVO>> queryDetailPage(@RequestBody @Valid PurchaseRequestOrderQueryForm queryForm) {
         return ResponseDTO.ok(purchaseRequestOrderDetailService.queryDetailPage(queryForm));
+    }
+
+    @Operation(summary = "根据明细ID集合查询")
+    @PostMapping("/purchaseRequestOrder/detail/queryByIdList")
+    public ResponseDTO<List<PurchaseRequestOrderDetailVO>> queryDetailByIdList(@RequestBody ValidateList<Long> idList) {
+        return ResponseDTO.ok(purchaseRequestOrderDetailService.selectByIdList(idList));
     }
 
     @Operation(summary = "添加 @author 赵嘉伟")

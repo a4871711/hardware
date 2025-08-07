@@ -78,6 +78,46 @@
         AND t_purchase_request_order_detail.deleted_flag = 0
     </select>
 
+    <select id="selectByIdList"
+            resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailVO">
+        SELECT
+        <include refid="base_columns"/>
+        , t_base_mat.source_property
+        , t_base_mat.mat_no
+        , t_base_mat.mat_name
+        , t_base_mat.pro
+        , t_base_color.color_id
+        , t_base_color.color_name
+        , t_base_bom.product_code
+        , t_base_bom.product_name
+        , t_base_bom.product_color
+        , t_sales_order.order_code
+        , t_base_cust.cust_name
+        , t_base_mat_cust.price AS unitPrice
+        , t_base_bom.series_name
+        , t_base_bom.cust_product_name
+        , t_base_mat_type.mat_type_id
+        , t_base_mat_type.mat_type_name
+        , t_base_mat_type.mat_type_code
+        , t_base_mat.mat_image
+        FROM t_purchase_request_order_detail t_purchase_request_order_detail
+        LEFT JOIN t_sales_order_mat t_sales_order_mat ON t_purchase_request_order_detail.sales_order_mat_id =
+        t_sales_order_mat.sales_order_mat_id
+        LEFT JOIN t_sales_order t_sales_order ON t_sales_order_mat.sales_order_id = t_sales_order.sales_order_id
+        LEFT JOIN t_base_bom t_base_bom ON t_sales_order_mat.bom_id = t_base_bom.bom_id
+        LEFT JOIN t_base_mat t_base_mat ON t_purchase_request_order_detail.mat_id = t_base_mat.mat_id
+        LEFT JOIN t_base_color t_base_color ON t_base_mat.color_id = t_base_color.color_id
+        LEFT JOIN t_base_mat_cust t_base_mat_cust ON t_base_mat.mat_id = t_base_mat_cust.mat_id
+        AND t_base_mat_cust.master = 1
+        LEFT JOIN t_base_cust t_base_cust ON t_purchase_request_order_detail.cust_id = t_base_cust.cust_id
+        LEFT JOIN t_base_mat_type t_base_mat_type ON t_base_mat_type.mat_type_id = t_base_mat.mat_type_id
+        WHERE t_purchase_request_order_detail.purchase_request_order_detail_id IN
+        <foreach collection="idList" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND t_purchase_request_order_detail.deleted_flag = 0
+    </select>
+
     <select id="queryDetailPage"
             resultType="net.lab1024.sa.admin.module.business.purchase.request.domain.vo.PurchaseRequestOrderDetailInfoVO">
         SELECT

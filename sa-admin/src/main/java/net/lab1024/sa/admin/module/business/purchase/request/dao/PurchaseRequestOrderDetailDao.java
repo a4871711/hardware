@@ -50,4 +50,9 @@ public interface PurchaseRequestOrderDetailDao extends BaseMapper<PurchaseReques
      * 分页查询（已审核且未被已审核采购订货单引用的明细）
      */
     List<PurchaseRequestOrderDetailInfoVO> queryDetailPage(Page page, @Param("queryForm") PurchaseRequestOrderQueryForm queryForm);
+
+    /**
+     * 根据明细ID集合查询
+     */
+    List<PurchaseRequestOrderDetailVO> selectByIdList(@Param("idList") List<Long> idList);
 }

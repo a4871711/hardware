@@ -56,6 +56,16 @@ public class PurchaseRequestOrderDetailService {
     }
 
     /**
+     * 根据明细ID集合查询
+     */
+    public List<PurchaseRequestOrderDetailVO> selectByIdList(List<Long> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return List.of();
+        }
+        return purchaseRequestOrderDetailDao.selectByIdList(idList);
+    }
+
+    /**
      * 添加
      */
     public ResponseDTO<String> add(PurchaseRequestOrderDetailAddForm addForm) {
