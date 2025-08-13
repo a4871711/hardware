@@ -106,24 +106,12 @@ public class StatisticInnerInterceptor implements InnerInterceptor {
         // Map 类型参数 (通常由 @Param 注解产生)
         if (parameterObject instanceof Map) {
             Map<?, ?> paramMap = (Map<?, ?>) parameterObject;
-
-            // 首先尝试从Map中查找Page对象
             for (Object value : paramMap.values()) {
-                if (value instanceof com.baomidou.mybatisplus.core.metadata.IPage) {
-                    // 检查Page对象是否是StatisticalColumn的实例（比如CustomPage继承了StatisticalColumn）
-                    if (value instanceof StatisticalColumn) {
-                        return (StatisticalColumn) value;
-                    }
-                    // 如果Page对象不是StatisticalColumn的子类，但我们仍然可以尝试其他方式
+                StatisticalColumn column = extractStatisticalColumn(value);
+                if (column != null) {
+                    return column;
                 }
             }
-
-            // 然后从Map的值中查找StatisticalColumn
-            return paramMap.values().stream()
-                    .filter(StatisticalColumn.class::isInstance)
-                    .map(StatisticalColumn.class::cast)
-                    .findFirst()
-                    .orElse(null);
         }
 
         return null;
@@ -547,8 +535,8 @@ public class StatisticInnerInterceptor implements InnerInterceptor {
         }
 
         // 直接是Page对象
-        if (parameter instanceof com.baomidou.mybatisplus.core.metadata.IPage) {
-            setStatisticsToPage((com.baomidou.mybatisplus.core.metadata.IPage<?>) parameter, statisticResults);
+        if (parameter instanceof IPage) {
+            setStatisticsToPage((IPage<?>) parameter, statisticResults);
             return;
         }
 
@@ -556,8 +544,8 @@ public class StatisticInnerInterceptor implements InnerInterceptor {
         if (parameter instanceof Map) {
             Map<?, ?> paramMap = (Map<?, ?>) parameter;
             for (Object value : paramMap.values()) {
-                if (value instanceof com.baomidou.mybatisplus.core.metadata.IPage) {
-                    setStatisticsToPage((com.baomidou.mybatisplus.core.metadata.IPage<?>) value, statisticResults);
+                if (value instanceof IPage) {
+                    setStatisticsToPage((IPage<?>) value, statisticResults);
                     return;
                 }
             }

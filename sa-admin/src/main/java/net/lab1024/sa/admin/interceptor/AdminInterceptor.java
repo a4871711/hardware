@@ -180,8 +180,9 @@ public class AdminInterceptor implements HandlerInterceptor {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         // 清除上下文
         SmartRequestUtil.remove();
-        // 开发环境，关闭 sa token 的临时切换用户
-        if (systemEnvironment.getCurrentEnvironment() == SystemEnvironmentEnum.DEV) {
+        // 开发或测试环境，关闭 sa token 的临时切换用户
+        if (systemEnvironment.getCurrentEnvironment() == SystemEnvironmentEnum.DEV
+                || systemEnvironment.getCurrentEnvironment() == SystemEnvironmentEnum.TEST) {
             StpUtil.endSwitch();
         }
     }
