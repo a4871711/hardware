@@ -3,26 +3,14 @@
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
           https://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-    <!-- 国内镜像，优先用阿里云 -->
     <mirrors>
+        <!-- 使用 Maven Central -->
         <mirror>
-            <id>aliyunmaven</id>
-            <name>Aliyun Maven</name>
-            <url>https://maven.aliyun.com/repository/public</url>
+            <id>central</id>
             <mirrorOf>central</mirrorOf>
+            <name>Maven Central Mirror</name>
+            <url>https://repo1.maven.org/maven2/</url>
         </mirror>
     </mirrors>
 
-    <!-- 如 CodeX 需要代理，上面镜像也要走代理的话，开启 proxies（没有就删掉这一段） -->
-    <!--
-    <proxies>
-      <proxy>
-        <id>http-proxy</id>
-        <active>true</active>
-        <protocol>http</protocol>
-        <host>127.0.0.1</host>
-        <port>7890</port>
-      </proxy>
-    </proxies>
-    -->
 </settings>
