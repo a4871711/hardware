@@ -26,65 +26,66 @@ import java.util.List;
 
 @RestController
 @Tag(name = "多级BOM-主表")
+@RequestMapping("/baseBom")
 public class BaseBomController {
 
     @Resource
     private BaseBomService baseBomService;
 
     @Operation(summary = "分页查询 @author 赵嘉伟")
-    @PostMapping("/baseBom/queryPage")
+    @PostMapping("/queryPage")
     @SaCheckPermission("baseBom:query")
     public ResponseDTO<PageResult<BaseBomVO>> queryPage(@RequestBody @Valid BaseBomQueryForm queryForm) {
         return ResponseDTO.ok(baseBomService.queryPage(queryForm));
     }
 
     @Operation(summary = "search分页查询 @author 赵嘉伟")
-    @PostMapping("/baseBom/querySearch")
+    @PostMapping("/querySearch")
     public ResponseDTO<PageResult<BaseBomVO>> querySearch(@RequestBody @Valid BaseBomQueryForm queryForm) {
         return ResponseDTO.ok(baseBomService.querySearch(queryForm));
     }
 
     @Operation(summary = "添加 @author 赵嘉伟")
-    @PostMapping("/baseBom/add")
+    @PostMapping("/add")
     @SaCheckPermission("baseBom:add")
     public ResponseDTO<String> add(@RequestBody @Valid BaseBomAddForm addForm) {
         return baseBomService.add(addForm);
     }
 
     @Operation(summary = "更新 @author 赵嘉伟")
-    @PostMapping("/baseBom/saveOrUpdate")
+    @PostMapping("/saveOrUpdate")
     public ResponseDTO<Long> saveOrUpdate(@RequestBody @Valid BaseBomUpdateForm updateForm) {
         return baseBomService.saveOrUpdate(updateForm);
     }
 
     @Operation(summary = "详情 @author 赵嘉伟")
-    @GetMapping("/baseBom/detail/{bomId}")
+    @GetMapping("/detail/{bomId}")
     public ResponseDTO<BaseBomDetailVO> detail(@PathVariable Long bomId) {
         return baseBomService.detail(bomId);
     }
 
     @Operation(summary = "根据BomIdList获取产品材料 @author 赵嘉伟")
-    @PostMapping("/baseBom/getByBomIdList")
+    @PostMapping("/getByBomIdList")
     public ResponseDTO<List<BaseBomProductVO>> getByBomIdList(@RequestBody List<Long> bomIdList) {
         return baseBomService.getByBomIdList(bomIdList);
     }
 
 
     @Operation(summary = "单个删除 @author 赵嘉伟")
-    @GetMapping("/baseBom/delete/{bomId}")
+    @DeleteMapping("/delete/{bomId}")
     @SaCheckPermission("baseBom:delete")
-    public ResponseDTO<String> batchDelete(@PathVariable Long bomId) {
+    public ResponseDTO<String> delete(@PathVariable Long bomId) {
         return baseBomService.delete(bomId);
     }
 
     @Operation(summary = "审核/反审核 @author 赵嘉伟")
-    @PostMapping("/baseBom/audit")
+    @PostMapping("/audit")
     public ResponseDTO<String> audit(@Valid @RequestBody BaseBomAuditForm baseBomAuditForm) {
         return baseBomService.audit(baseBomAuditForm);
     }
 
     @Operation(summary = "作废/反作废 @author 赵嘉伟")
-    @PostMapping("/baseBom/invalid")
+    @PostMapping("/invalid")
     @SaCheckPermission("baseBom:invalid")
     public ResponseDTO<String> invalid(@Valid @RequestBody BaseBomInvalidForm baseBomInvalidForm) {
         return baseBomService.invalid(baseBomInvalidForm);
