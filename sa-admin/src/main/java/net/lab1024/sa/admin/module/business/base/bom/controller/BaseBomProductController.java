@@ -25,43 +25,44 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "多级BOM-产品材料")
+@RequestMapping("/baseBomProduct")
 public class BaseBomProductController {
 
     @Resource
     private BaseBomProductService baseBomProductService;
 
     @Operation(summary = "分页查询 @author 赵嘉伟")
-    @PostMapping("/baseBomProduct/queryPage")
+    @PostMapping("/queryPage")
     @SaCheckPermission("baseBomProduct:query")
     public ResponseDTO<PageResult<BaseBomProductVO>> queryPage(@RequestBody @Valid BaseBomProductQueryForm queryForm) {
         return ResponseDTO.ok(baseBomProductService.queryPage(queryForm));
     }
 
     @Operation(summary = "添加 @author 赵嘉伟")
-    @PostMapping("/baseBomProduct/add")
+    @PostMapping("/add")
     @SaCheckPermission("baseBomProduct:add")
     public ResponseDTO<String> add(@RequestBody @Valid BaseBomProductAddForm addForm) {
         return baseBomProductService.add(addForm);
     }
 
     @Operation(summary = "更新 @author 赵嘉伟")
-    @PostMapping("/baseBomProduct/update")
+    @PutMapping("/update")
     @SaCheckPermission("baseBomProduct:update")
     public ResponseDTO<String> update(@RequestBody @Valid BaseBomProductUpdateForm updateForm) {
         return baseBomProductService.update(updateForm);
     }
 
     @Operation(summary = "批量删除 @author 赵嘉伟")
-    @PostMapping("/baseBomProduct/batchDelete")
+    @DeleteMapping("/batchDelete")
     @SaCheckPermission("baseBomProduct:delete")
     public ResponseDTO<String> batchDelete(@RequestBody ValidateList<Long> idList) {
         return baseBomProductService.batchDelete(idList);
     }
 
     @Operation(summary = "单个删除 @author 赵嘉伟")
-    @GetMapping("/baseBomProduct/delete/{bomProductId}")
+    @DeleteMapping("/delete/{bomProductId}")
     @SaCheckPermission("baseBomProduct:delete")
-    public ResponseDTO<String> batchDelete(@PathVariable Long bomProductId) {
+    public ResponseDTO<String> delete(@PathVariable Long bomProductId) {
         return baseBomProductService.delete(bomProductId);
     }
 }
