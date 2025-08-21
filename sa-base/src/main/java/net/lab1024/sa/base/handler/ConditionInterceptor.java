@@ -12,18 +12,14 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 import java.util.*;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 @Slf4j
 public class ConditionInterceptor implements InnerInterceptor {
 
-    // 用于查找常见 SQL 子句的正则表达式模式
-    // 这些子句会影响 WHERE 和 ORDER BY 的插入位置或用于移除现有子句
-    // 注意：这是一个简化版本，不能完美处理所有复杂的 SQL 结构（例如嵌套子查询中的关键词、注释等）。
-    private static final Pattern CLAUSE_PATTERN =
-            Pattern.compile("\\s+(WHERE|GROUP BY|HAVING|ORDER BY|LIMIT)\\s+", Pattern.CASE_INSENSITIVE);
+    // 顶层注入逻辑已改为括号深度扫描，移除原基于正则的子句匹配常量
 
     // 用于在 SQL 字符串中查找潜在的别名及其后的点号和列名的正则表达式模板。
     // 捕获组 1 捕获别名。查找点号前的别名，并在其周围及列名后有单词边界或字符串开头/结尾。
@@ -33,16 +29,14 @@ public class ConditionInterceptor implements InnerInterceptor {
     // 用于缓存针对每个列名编译好的正则表达式 Pattern
     private final Map<String, Pattern> aliasColumnPatternCache = new java.util.concurrent.ConcurrentHashMap<>();
 
-
     // 用于缓存从 ResultMap 中提取的属性 (property) -> 别名 (alias) 映射。
     // 对于 column 中包含别名的显式 ResultMap，这是可靠的。
     // 对于 resultType 自动生成的 ResultMap，如果 alias 未保留在 column 名中，则不可靠。
     private final Map<String, Map<String, String>> msFieldAliasCache = new java.util.concurrent.ConcurrentHashMap<>();
 
-
     @Override
     public void beforeQuery(Executor executor, MappedStatement ms, Object parameter,
-                            RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+            RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
 
         // 仅处理 SELECT 操作
         if (!ms.getSqlCommandType().equals(SqlCommandType.SELECT)) {
@@ -132,7 +126,7 @@ public class ConditionInterceptor implements InnerInterceptor {
                 if (resultMappings != null) {
                     for (ResultMapping resultMapping : resultMappings) {
                         String property = resultMapping.getProperty(); // Java 属性名 (camelCase)
-                        String column = resultMapping.getColumn();   // 数据库列名 (可能是 "alias.column_name" 或仅 "column_name")
+                        String column = resultMapping.getColumn(); // 数据库列名 (可能是 "alias.column_name" 或仅 "column_name")
 
                         if (isNotBlank(property) && isNotBlank(column)) {
                             // 如果 column 名包含 '.'，则假定点号前是别名
@@ -154,14 +148,13 @@ public class ConditionInterceptor implements InnerInterceptor {
         return fieldAliasMap;
     }
 
-
     /**
      * 处理单个 Criterion，生成 WHERE 或 ORDER BY 片段。
      * 尝试首先从 ResultMap 别名中查找别名，然后从 SQL 字符串搜索中查找。
      */
     private void processCriterion(Condition.Criterion criterion, List<String> whereConditions,
-                                  List<Object> params, List<String> orderByConditions,
-                                  Map<String, String> resultMapAliases, BoundSql boundSql) { // 接收 ResultMap 别名映射和 BoundSql
+            List<Object> params, List<String> orderByConditions,
+            Map<String, String> resultMapAliases, BoundSql boundSql) { // 接收 ResultMap 别名映射和 BoundSql
         String field = criterion.getField(); // 例如："companyName" (来自 Condition 的 camelCase 字段名)
         String operation = criterion.getOperation();
         Object value = criterion.getValue();
@@ -179,7 +172,6 @@ public class ConditionInterceptor implements InnerInterceptor {
         // 使用原始字段名 (camelCase) 作为 ResultMap 别名映射的 key
         String tableAlias = resultMapAliases.get(field);
 
-
         // 2. 如果 ResultMap 中未找到别名，则尝试通过搜索 SQL 字符串来查找
         // 使用映射后的 (snake_case) 列名在原始 SQL 字符串中搜索。
         if (isBlank(tableAlias)) {
@@ -191,7 +183,6 @@ public class ConditionInterceptor implements InnerInterceptor {
 
         // 如果找到了别名（无论来自 ResultMap 还是 SQL 搜索），则构建完整的列名（别名.列名）；否则只使用列名
         String fullColumnName = isNotBlank(tableAlias) ? tableAlias + "." + mappedField : mappedField;
-
 
         // 处理 ORDER BY 排序条件
         if (isNotBlank(sortBy)) {
@@ -239,7 +230,8 @@ public class ConditionInterceptor implements InnerInterceptor {
                     whereConditions.add(fullColumnName + " LIKE ?");
                     params.add("%" + value + "%"); // 默认使用 %value% 进行模糊匹配
                     break;
-                // TODO: 根据需要添加更多操作符支持 (例如 'in', 'not in', 'between', 'is null', 'is not null' 等)
+                // TODO: 根据需要添加更多操作符支持 (例如 'in', 'not in', 'between', 'is null', 'is not null'
+                // 等)
                 default:
                     log.info("不支持的操作符: {}，字段: {}。跳过 WHERE 条件。", operation, field);
                     break;
@@ -269,12 +261,14 @@ public class ConditionInterceptor implements InnerInterceptor {
 
         Matcher matcher = pattern.matcher(sql);
 
-        // 查找第一个匹配项，并返回捕获的别名 (捕获组 1)
-        if (matcher.find()) {
+        // 遍历匹配项，返回第一个位于顶层（括号深度为0，且不在引号内）的别名
+        while (matcher.find()) {
+            int matchStart = matcher.start();
+            if (!isTopLevelPosition(sql, matchStart)) {
+                continue;
+            }
             String alias = matcher.group(1);
-            // 添加基本检查以过滤明显的误报（例如，别名与列名本身相同）
-            // 或者其他常见的可能出现在点号前的非别名字符串（例如 "schema", "dbo"）
-            if (isNotBlank(alias) && !alias.equalsIgnoreCase(mappedColumnName) /* 根据需要添加更多过滤 */) {
+            if (isNotBlank(alias) && !alias.equalsIgnoreCase(mappedColumnName)) {
                 return alias;
             }
         }
@@ -282,7 +276,6 @@ public class ConditionInterceptor implements InnerInterceptor {
         // 如果没有找到匹配项或找到的匹配项有问题，则返回 null
         return null;
     }
-
 
     /**
      * 将 camelCase 字符串转换为 snake_case。
@@ -305,7 +298,8 @@ public class ConditionInterceptor implements InnerInterceptor {
                 // 同时处理连续大写的情况，如 "userID" -> "user_id"
                 if (snakeCase.charAt(snakeCase.length() - 1) != '_') {
                     // 如果当前大写字母后面还有小写字母，或者这是最后一个字符，才加下划线
-                    if ((i + 1 < camelCase.length() && Character.isLowerCase(camelCase.charAt(i + 1))) || i == camelCase.length() - 1) {
+                    if ((i + 1 < camelCase.length() && Character.isLowerCase(camelCase.charAt(i + 1)))
+                            || i == camelCase.length() - 1) {
                         snakeCase.append('_');
                     }
                 }
@@ -323,109 +317,168 @@ public class ConditionInterceptor implements InnerInterceptor {
         return snakeCase.toString();
     }
 
-
     /**
      * 构建新的 SQL 字符串，插入 WHERE 和 ORDER BY 子句。
      * 此版本修复了 "WHERE AND" 问题，并替换现有的 ORDER BY 子句。
      * 根据主要的 SQL 子句（GROUP BY, HAVING, ORDER BY, LIMIT）确定插入位置。
      */
     private String buildNewSql(String originalSql, List<String> whereConditions, List<String> orderByConditions) {
-        String trimmedSql = originalSql.trim();
-        StringBuilder sql = new StringBuilder(trimmedSql);
-        // 获取当前 StringBuilder 的大写字符串用于查找，注意字符串可能会在插入时改变
-        String upper = sql.toString().toUpperCase();
+        StringBuilder sql = new StringBuilder(originalSql);
 
-        // 添加 WHERE 子句
+        // 仅在顶层注入 WHERE 条件，避免进入子查询
         if (!whereConditions.isEmpty()) {
             String conditionString = String.join(" AND ", whereConditions);
-            // 查找第一个 WHERE 关键字的位置
-            int whereKeywordPos = upper.indexOf(" WHERE ");
 
-            if (whereKeywordPos != -1) {
-                // 原始 SQL 中有 WHERE。查找插入位置：在现有 WHERE 子句内容之后，但在下一个 SQL 子句之前。
-                // 从 " WHERE " 关键字后面开始搜索后续子句 (GB, HV, OB, L)。
-                int searchStartPos = whereKeywordPos + " WHERE".length();
-                int insertPos = sql.length(); // 默认插入到末尾
-
-                // 查找从 searchStartPos 开始的第一个后续子句
-                Matcher afterWhereMatcher = CLAUSE_PATTERN.matcher(sql.substring(searchStartPos));
-                if (afterWhereMatcher.find()) {
-                    // 如果找到后续子句，插入位置就是 searchStartPos 加上后续子句的起始偏移量
-                    insertPos = searchStartPos + afterWhereMatcher.start();
-                }
-
-                // 在计算出的位置插入 " AND " + 新条件字符串
-                // 这确保了在 "WHERE" 和 "AND" 之间有内容（原始条件），从而修复了 "WHERE AND" 的错误。
+            int wherePos = indexOfTopLevel(sql.toString(), "WHERE", 0);
+            if (wherePos >= 0) {
+                int afterWhere = wherePos + " WHERE ".length();
+                int nextClause = indexOfFirstTopLevel(sql.toString(), afterWhere, "GROUP BY", "HAVING", "ORDER BY",
+                        "LIMIT");
+                int insertPos = nextClause >= 0 ? nextClause : sql.length();
                 sql.insert(insertPos, " AND " + conditionString);
-
             } else {
-                // 原始 SQL 中没有 WHERE。在第一个后续子句之前或在末尾插入 " WHERE " + 新条件。
-                int insertPos = sql.length(); // 默认插入到末尾
-                // 查找整个 SQL 字符串中的第一个主要子句
-                Matcher matcher = CLAUSE_PATTERN.matcher(sql);
-                if (matcher.find()) {
-                    // 如果找到主要子句，插入位置就是它的起始位置
-                    insertPos = matcher.start();
-                }
-                // 在计算出的位置插入 " WHERE " + 新条件字符串
+                int firstTopLevel = indexOfFirstTopLevel(sql.toString(), 0, "WHERE", "GROUP BY", "HAVING", "ORDER BY",
+                        "LIMIT");
+                int insertPos = firstTopLevel >= 0 ? firstTopLevel : sql.length();
                 sql.insert(insertPos, " WHERE " + conditionString);
             }
-            // 插入后，更新大写字符串，以便后续查找使用最新的 SQL 状态
-            upper = sql.toString().toUpperCase();
+            // no-op
         }
 
-        // 添加 ORDER BY 子句
+        // 仅在顶层处理 ORDER BY（放在 LIMIT 之前），并替换顶层已有 ORDER BY
         if (!orderByConditions.isEmpty()) {
             String orderByClause = String.join(", ", orderByConditions);
 
-            // 查找新 ORDER BY 的插入位置：在 LIMIT 子句之前，或者在当前 SQL 的末尾
-            int orderByInsertPos = sql.length(); // 默认插入到末尾
-            int limitIndexInNewSql = upper.indexOf(" LIMIT "); // 在更新后的大写字符串中查找 LIMIT
-            if (limitIndexInNewSql != -1) {
-                orderByInsertPos = limitIndexInNewSql; // 如果找到 LIMIT，插入到 LIMIT 之前
+            int existingOrderByStart = indexOfTopLevel(sql.toString(), "ORDER BY", 0);
+            if (existingOrderByStart >= 0) {
+                int afterExistingOrderBy = existingOrderByStart + " ORDER BY ".length();
+                int endOfOrderBy = indexOfFirstTopLevel(sql.toString(), afterExistingOrderBy, "LIMIT");
+                if (endOfOrderBy < 0) {
+                    endOfOrderBy = sql.length();
+                }
+                sql.delete(existingOrderByStart, endOfOrderBy);
+                // no-op
             }
 
-            // 策略：如果存在 ORDER BY 条件，则替换任何现有的 ORDER BY 子句，
-            // 将新的 ORDER BY 放在 LIMIT 之前（如果存在的话）。
-
-            // 查找现有的 ORDER BY 子句的起始位置
-            int existingOrderByStart = upper.indexOf(" ORDER BY ");
-
-            if (existingOrderByStart != -1) {
-                // 查找现有的 ORDER BY 子句在当前 SQL Builder 状态中的结束位置
-                int existingOrderByEnd = sql.length(); // 默认到末尾
-                // 查找现有 ORDER BY 关键字后第一个后续子句的位置
-                Matcher afterExistingOrderByMatcher = CLAUSE_PATTERN.matcher(sql.substring(existingOrderByStart + " ORDER BY".length()));
-                if (afterExistingOrderByMatcher.find()) {
-                    // 如果找到后续子句，结束位置就是 existingOrderByStart 加上 " ORDER BY" 长度和后续子句的起始偏移量
-                    existingOrderByEnd = existingOrderByStart + " ORDER BY".length() + afterExistingOrderByMatcher.start();
-                }
-
-                // 从 StringBuilder 中删除现有的 ORDER BY 子句
-                sql.delete(existingOrderByStart, existingOrderByEnd);
-                // 删除后，更新大写字符串
-                upper = sql.toString().toUpperCase();
-                // 重新计算新 ORDER BY 的插入位置，因为删除可能改变了 LIMIT 的位置
-                orderByInsertPos = sql.length();
-                limitIndexInNewSql = upper.indexOf(" LIMIT "); // 在删除后的大写字符串中重新查找 LIMIT
-                if (limitIndexInNewSql != -1) {
-                    orderByInsertPos = limitIndexInNewSql;
-                }
-            }
-
-            // 在确定的位置（LIMIT 之前或末尾）插入新的 ORDER BY 子句
+            int limitPos = indexOfTopLevel(sql.toString(), "LIMIT", 0);
+            int orderByInsertPos = limitPos >= 0 ? limitPos : sql.length();
             sql.insert(orderByInsertPos, " ORDER BY " + orderByClause);
         }
 
-        // 返回最终的 SQL 字符串，并去除首尾空白
         return sql.toString().trim();
     }
 
+    // 在顶层（括号深度为 0，且不在引号内）查找关键字首次出现的位置；关键字需以单词边界匹配，大小写不敏感
+    private int indexOfTopLevel(String sql, String keyword, int fromIndex) {
+        return findTopLevelKeyword(sql, keyword.toUpperCase(Locale.ROOT), fromIndex);
+    }
+
+    // 从 fromIndex 开始，查找若干关键字在顶层的最先出现位置（返回该位置，未找到返回 -1）
+    private int indexOfFirstTopLevel(String sql, int fromIndex, String... keywords) {
+        int minPos = -1;
+        for (String kw : keywords) {
+            int pos = findTopLevelKeyword(sql, kw.toUpperCase(Locale.ROOT), fromIndex);
+            if (pos >= 0 && (minPos < 0 || pos < minPos)) {
+                minPos = pos;
+            }
+        }
+        return minPos;
+    }
+
+    private int findTopLevelKeyword(String sql, String keywordUpper, int fromIndex) {
+        final String upper = sql.toUpperCase(Locale.ROOT);
+        int depth = 0;
+        boolean inSingle = false;
+        boolean inDouble = false;
+        for (int i = Math.max(0, fromIndex); i < upper.length(); i++) {
+            char ch = upper.charAt(i);
+
+            // 处理引号，尽量跳过字符串中的内容
+            char raw = sql.charAt(i);
+            if (!inDouble && raw == '\'') {
+                // 处理 SQL 单引号（简单处理，未严格处理转义：对大部分业务 SQL 足够）
+                inSingle = !inSingle;
+                continue;
+            }
+            if (!inSingle && raw == '"') {
+                inDouble = !inDouble;
+                continue;
+            }
+            if (inSingle || inDouble) {
+                continue;
+            }
+
+            // 括号深度
+            if (ch == '(') {
+                depth++;
+                continue;
+            } else if (ch == ')') {
+                if (depth > 0) {
+                    depth--;
+                }
+                continue;
+            }
+
+            if (depth == 0) {
+                if (matchKeywordAt(upper, i, keywordUpper)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private boolean matchKeywordAt(String upperSql, int index, String keywordUpper) {
+        int end = index + keywordUpper.length();
+        if (end > upperSql.length()) {
+            return false;
+        }
+        // 必须以关键字开头
+        if (!upperSql.startsWith(keywordUpper, index)) {
+            return false;
+        }
+        // 前后需要是边界（空白或字符串开头/结尾，或左括号）
+        boolean leftBoundary = index == 0 || Character.isWhitespace(upperSql.charAt(index - 1))
+                || upperSql.charAt(index - 1) == '(';
+        boolean rightBoundary = end == upperSql.length() || Character.isWhitespace(upperSql.charAt(end))
+                || upperSql.charAt(end) == ')';
+        return leftBoundary && rightBoundary;
+    }
+
+    // 判断给定位置是否位于 SQL 顶层（括号深度为 0，且不在引号内）
+    private boolean isTopLevelPosition(String sql, int position) {
+        int depth = 0;
+        boolean inSingle = false;
+        boolean inDouble = false;
+        for (int i = 0; i < position && i < sql.length(); i++) {
+            char raw = sql.charAt(i);
+            if (!inDouble && raw == '\'') {
+                inSingle = !inSingle;
+                continue;
+            }
+            if (!inSingle && raw == '"') {
+                inDouble = !inDouble;
+                continue;
+            }
+            if (inSingle || inDouble) {
+                continue;
+            }
+            if (raw == '(') {
+                depth++;
+            } else if (raw == ')') {
+                if (depth > 0) {
+                    depth--;
+                }
+            }
+        }
+        return !inSingle && !inDouble && depth == 0;
+    }
 
     /**
      * 重置 BoundSql 对象，更新 SQL 字符串并添加额外参数。
      */
-    private void resetBoundSql(BoundSql boundSql, String newSql, Object parameter, List<Object> extraParams, Configuration configuration) {
+    private void resetBoundSql(BoundSql boundSql, String newSql, Object parameter, List<Object> extraParams,
+            Configuration configuration) {
         // 使用 MetaObject 来安全地修改 BoundSql 的内部属性
         MetaObject metaObject = SystemMetaObject.forObject(boundSql);
 
@@ -461,7 +514,8 @@ public class ConditionInterceptor implements InnerInterceptor {
         }
     }
 
-    // -------------------- 辅助方法 (替代 StringUtils.isBlank/isNotBlank) --------------------
+    // -------------------- 辅助方法 (替代 StringUtils.isBlank/isNotBlank)
+    // --------------------
 
     private boolean isBlank(String str) {
         return str == null || str.trim().isEmpty();
@@ -476,11 +530,12 @@ public class ConditionInterceptor implements InnerInterceptor {
     // 使用说明：
     // 1. 确保你的项目中有 Condition 和 Criterion 类，其结构如注释所示（Criterion 不包含 alias 字段）。
     // 2. 将 ConditionInterceptor 类放在你的项目中。
-    // 3. 在 MyBatis 配置中注册此拦截器。如果你使用 Mybatis-Plus，通常通过 MybatisPlusInterceptor 添加 InnerInterceptor。
-    //    如果你使用原生 MyBatis，则在 mybatis-config.xml 的 <plugins> 中配置。
+    // 3. 在 MyBatis 配置中注册此拦截器。如果你使用 Mybatis-Plus，通常通过 MybatisPlusInterceptor 添加
+    // InnerInterceptor。
+    // 如果你使用原生 MyBatis，则在 mybatis-config.xml 的 <plugins> 中配置。
     // 4. 在构建 Condition 对象和 Criterion 时，Criterion 不再需要指定表别名。
-    //    例如：Condition.criterion("custName", "like", "测试")
-    //    Interceptor 将尝试通过解析 ResultMap 和搜索 SQL 字符串来自动查找 "custName" 对应的表别名。
+    // 例如：Condition.criterion("custName", "like", "测试")
+    // Interceptor 将尝试通过解析 ResultMap 和搜索 SQL 字符串来自动查找 "custName" 对应的表别名。
 
     // 注意局限性：
     // - 自动别名推断（尤其是 SQL 搜索部分）是启发式的，不保证在所有复杂的 SQL 语法下都准确无误。

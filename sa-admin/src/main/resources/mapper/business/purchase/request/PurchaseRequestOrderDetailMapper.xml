@@ -150,9 +150,6 @@
                 AND po.audit = 1
                 AND pod.deleted_flag = 0
             )
-            <if test="queryForm != null">
-                <!-- 这里可以根据queryForm的字段动态追加查询条件 -->
-            </if>
     </select>
 
     <update id="batchUpdateDeleted">
