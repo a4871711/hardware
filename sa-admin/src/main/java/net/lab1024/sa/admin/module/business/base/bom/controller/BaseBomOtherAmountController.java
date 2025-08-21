@@ -25,43 +25,44 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "多级bom其他费用")
+@RequestMapping("/baseBomOtherAmount")
 public class BaseBomOtherAmountController {
 
     @Resource
     private BaseBomOtherAmountService baseBomOtherAmountService;
 
     @Operation(summary = "分页查询 @author 赵嘉伟")
-    @PostMapping("/baseBomOtherAmount/queryPage")
+    @PostMapping("/queryPage")
     @SaCheckPermission("baseBomOtherAmount:query")
     public ResponseDTO<PageResult<BaseBomOtherAmountVO>> queryPage(@RequestBody @Valid BaseBomOtherAmountQueryForm queryForm) {
         return ResponseDTO.ok(baseBomOtherAmountService.queryPage(queryForm));
     }
 
     @Operation(summary = "添加 @author 赵嘉伟")
-    @PostMapping("/baseBomOtherAmount/add")
+    @PostMapping("/add")
     @SaCheckPermission("baseBomOtherAmount:add")
     public ResponseDTO<String> add(@RequestBody @Valid BaseBomOtherAmountAddForm addForm) {
         return baseBomOtherAmountService.add(addForm);
     }
 
     @Operation(summary = "更新 @author 赵嘉伟")
-    @PostMapping("/baseBomOtherAmount/update")
+    @PutMapping("/update")
     @SaCheckPermission("baseBomOtherAmount:update")
     public ResponseDTO<String> update(@RequestBody @Valid BaseBomOtherAmountUpdateForm updateForm) {
         return baseBomOtherAmountService.update(updateForm);
     }
 
     @Operation(summary = "批量删除 @author 赵嘉伟")
-    @PostMapping("/baseBomOtherAmount/batchDelete")
+    @DeleteMapping("/batchDelete")
     @SaCheckPermission("baseBomOtherAmount:delete")
     public ResponseDTO<String> batchDelete(@RequestBody ValidateList<Long> idList) {
         return baseBomOtherAmountService.batchDelete(idList);
     }
 
     @Operation(summary = "单个删除 @author 赵嘉伟")
-    @GetMapping("/baseBomOtherAmount/delete/{bomOtherAmount}")
+    @DeleteMapping("/delete/{bomOtherAmount}")
     @SaCheckPermission("baseBomOtherAmount:delete")
-    public ResponseDTO<String> batchDelete(@PathVariable Long bomOtherAmount) {
+    public ResponseDTO<String> delete(@PathVariable Long bomOtherAmount) {
         return baseBomOtherAmountService.delete(bomOtherAmount);
     }
 }
