@@ -19,4 +19,6 @@ public class BaseMatQueryForm extends PageParam {
     private String keywords;
 
     private Boolean invalid;
+
+    private Long matTypeId;
 }

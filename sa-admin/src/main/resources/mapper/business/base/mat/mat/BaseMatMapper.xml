@@ -48,6 +48,9 @@
             <if test="queryForm.invalid != null">
                 AND t_base_mat.invalid = #{queryForm.invalid}
             </if>
+            <if test="queryForm.matTypeId != null">
+                AND t_base_mat.mat_type_id = #{queryForm.matTypeId}
+            </if>
         </where>
     </select>
     <select id="getDetailById"
